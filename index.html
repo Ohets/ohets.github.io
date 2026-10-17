@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Air Simulator — Flight Experience</title>
+<style>
+:root{--glass:rgba(7,18,34,.78);--line:rgba(160,210,255,.22);--cyan:#6be5ff;--white:#eef8ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8bc8f4;color:var(--white);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none}canvas{display:block;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}.panel{background:var(--glass);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(10px);box-shadow:0 8px 28px #00101f35}.top{position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px}.brand{font-weight:900;letter-spacing:.12em;font-size:14px}.brand span{color:var(--cyan)}.stat{font-size:12px;color:#c8deef}.stat strong{font-size:16px;color:white;display:block}.rightStats{display:flex;gap:14px;text-align:right}.actions{position:absolute;top:76px;left:10px;right:10px;display:flex;flex-wrap:nowrap;gap:7px;pointer-events:auto;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:thin;scrollbar-color:var(--cyan) rgba(255,255,255,.12);padding-bottom:5px}.actions .uiBtn{flex:0 0 auto;white-space:nowrap}.actions::-webkit-scrollbar{height:5px}.actions::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:5px}.actions::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:5px}.uiBtn{border:1px solid var(--line);background:var(--glass);color:white;padding:9px 12px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer}.uiBtn.primary{background:#0d93b8;border-color:#63e6ff}.bottomInfo{position:absolute;left:10px;bottom:12px;padding:10px 12px;font-size:11px;line-height:1.65;color:#d3e8f7}.bottomInfo b{color:#fff}body.footMode .smallControls,body.footMode .throttle{display:none!important}body.footMode .flightControls{left:12px;right:auto;bottom:24px}.flightControls{position:absolute;bottom:14px;left:12px;right:12px;display:flex;align-items:end;justify-content:space-between;pointer-events:none}.stick{width:112px;height:112px;border:1px solid #c2edff66;background:#06152666;border-radius:50%;position:relative;pointer-events:auto;touch-action:none;box-shadow:inset 0 0 18px #0005}.stick:before{content:"";position:absolute;inset:20px;border:1px dashed #b8e8ff55;border-radius:50%}.knob{width:42px;height:42px;position:absolute;left:35px;top:35px;border-radius:50%;background:linear-gradient(145deg,#a9f2ff,#1688b6);border:2px solid #e3fbff;box-shadow:0 3px 12px #0006;pointer-events:none}.controlLabel{position:absolute;bottom:-20px;width:100%;text-align:center;font-size:10px;color:#e8f8ff;text-shadow:0 1px 4px #000}.throttle{pointer-events:auto;display:flex;flex-direction:column;gap:8px;align-items:center;background:var(--glass);padding:10px;border:1px solid var(--line);border-radius:14px;width:74px}.throttle input{writing-mode:vertical-lr;direction:rtl;height:100px;width:26px;accent-color:#6be5ff}.throttle label{font-size:10px;font-weight:800}.smallControls{pointer-events:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:4px}.smallControls button{min-width:70px}.crosshair{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);opacity:.7}.crosshair:before,.crosshair:after{content:"";position:absolute;background:#eafaff}.crosshair:before{width:20px;height:1px;top:9px}.crosshair:after{height:20px;width:1px;left:9px}
+#passengerFrame{display:none;position:fixed;inset:3.5% 3%;z-index:2;pointer-events:none;border:clamp(10px,2.5vw,24px) solid #172735;border-radius:19% / 15%;box-shadow:inset 0 0 0 3px #78909e,inset 0 0 22px #0009,0 0 0 5px #07111d;}
+#passengerFrame:before{content:"PASSENGER VIEW · WINDOW SEAT";position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);white-space:nowrap;background:#172735;color:#eaf8ff;padding:5px 12px;border-radius:0 0 9px 9px;font-size:10px;font-weight:800;letter-spacing:.08em}
+.overlay{position:fixed;inset:0;background:linear-gradient(135deg,#061425eF,#102c48e8);display:none;align-items:center;justify-content:center;padding:14px;z-index:10;overflow:auto;touch-action:pan-y}.overlay.show{display:flex}.modal{width:min(900px,100%);max-height:94vh;overflow:auto;padding:18px}.modalHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.modal h2{margin:0;font-size:22px}.muted{color:#9bb8cd;font-size:12px}.planeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}.planeCard{border:1px solid var(--line);background:#10243a;border-radius:12px;padding:12px;min-width:0}.planeIcon{height:72px;display:flex;align-items:center;justify-content:center;font-size:43px;background:linear-gradient(140deg,#173c58,#091626);border-radius:9px;margin-bottom:9px}.planeCard h3{font-size:13px;margin:0 0 4px}.planeCard p{font-size:11px;color:#a7c3d8;margin:0 0 9px;min-height:28px}.planeCard .price{font-weight:900;color:#72e5ff;font-size:13px;margin-bottom:9px}.planeCard button{width:100%}.creditPackages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.creditPackage{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);background:#10243a;border-radius:12px;padding:12px;min-width:0}.creditPackage strong{font-size:14px;color:#eef8ff}.creditPackage span{font-size:18px;font-weight:900;color:var(--cyan)}.creditPackage button{width:100%;margin-top:auto}.modalFooter{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}.notice{font-size:12px;line-height:1.55;color:#b7cede;margin:12px 0}.badge{font-size:10px;color:#8ce9ff;text-transform:uppercase;letter-spacing:.1em}.hidden{display:none!important}
+@media(max-width:600px){.top{top:7px;left:7px;right:7px;padding:8px}.brand{font-size:11px}.stat{font-size:10px}.stat strong{font-size:14px}.rightStats{gap:9px}.actions{top:65px;left:7px;right:7px;width:auto}.uiBtn{padding:8px 9px;font-size:11px}.bottomInfo{left:7px;bottom:142px;padding:7px 9px;font-size:10px}.stick{width:96px;height:96px}.knob{left:27px;top:27px;width:40px;height:40px}.throttle{width:62px;padding:7px}.throttle input{height:80px}.smallControls button{min-width:60px;padding:8px 6px}.flightControls{left:8px;right:8px;bottom:17px}.modal{padding:12px}.planeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.planeIcon{height:55px;font-size:34px}}
+
+
+#emailSignupForm{display:grid;gap:10px;text-align:left}
+#emailSignupForm input[type=email]{width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);background:#08192a;color:#fff;font:inherit}
+#emailSignupForm label{font-size:12px;line-height:1.45;color:#c5d8e7;display:flex;gap:8px;align-items:flex-start}
+#emailSignupForm input[type=checkbox]{margin-top:3px;flex-shrink:0}
+#emailSignupStatus{min-height:18px;font-size:12px;line-height:1.4;color:#b7cede}
+
+
+#authForm{display:grid;gap:10px}
+#authForm input{width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);background:#08192a;color:#fff;font:inherit}
+#authStatus{min-height:20px;font-size:12px;line-height:1.45;color:#c5d8e7}
+.authSwitch{display:flex;gap:8px;margin:12px 0}
+.authSwitch button{flex:1}
+
+</style>
+</head>
+<body>
+
+<div id="hud">
+ <div class="top panel">
+  <div><div class="brand">AIR <span>SIMULATOR</span></div><div class="stat" id="planeName">Cessna 172 · Trainer</div></div>
+  <div class="rightStats"><div class="stat">SPEED<strong><span id="speed">0</span> <small>km/h</small></strong></div><div class="stat">ALTITUDE<strong><span id="altitude">120</span> <small>m</small></strong></div><div class="stat">CREDITS<strong>✦ <span id="credits">1500</span></strong></div></div>
+ </div>
+ <div class="actions"> <a class="uiBtn" href="privacy.html" target="_blank" rel="noopener">PRIVACY</a><a class="uiBtn" href="mailto:steho01234@gmail.com">CONTACT</a> <button class="uiBtn" id="hangarBtn">✈ HANGAR</button><button class="uiBtn" id="missionsBtn">🎯 MISSIONS</button><button class="uiBtn" id="flightNYBtn">✈ FLIGHT TO NY</button><button class="uiBtn" id="flightLABtn">🌴 FLIGHT TO LA</button><button class="uiBtn" id="flightSFBtn">🌉 FLIGHT TO SF</button><button class="uiBtn" id="viewBtn">CAMERA: FOLLOW</button><button class="uiBtn" id="autopilotBtn">AUTOPILOT: OFF</button><button class="uiBtn" id="autoLandBtn">AUTO-LANDING: OFF</button><button class="uiBtn" id="gyroBtn">GYRO: OFF</button><button class="uiBtn" id="pauseBtn">Ⅱ PAUSE</button></div>
+ <div class="crosshair"></div>
+ <div class="bottomInfo panel"><b id="status">READY TO FLY</b><br>Joystick / Gyro: Pitch & roll<br>Throttle on the right · Switch camera<br><button class="uiBtn primary" id="nextMissionBtn" style="display:none;pointer-events:auto;margin-top:7px">Next Mission</button></div>
+ <div class="flightControls">
+  <div class="stick" id="stick"><div class="knob" id="knob"></div><div class="controlLabel">FLIGHT CONTROLS</div></div>
+  <div class="smallControls"><button class="uiBtn" id="gearBtn">▱ LANDING GEAR</button><button class="uiBtn" id="brakeBtn">🛑 BRAKE</button><button class="uiBtn" id="resetBtn">↻ RESET</button></div>
+  <div class="throttle"><label for="throttle">THROTTLE</label><input id="throttle" type="range" min="0" max="100" value="35"><label id="throttleVal">35%</label></div>
+ </div>
+ <div id="footControls" style="display:none;position:absolute;right:12px;bottom:18px;gap:8px;flex-direction:column;align-items:stretch;pointer-events:auto">
+  <button class="uiBtn primary" id="shootBtn" style="background:#9b2f2f;border-color:#ff9d9d">🔫 SHOOT</button>
+  <button class="uiBtn" id="exitPlaneBtn">🚶 EXIT AIRCRAFT</button>
+  <button class="uiBtn" id="enterPlaneBtn" style="display:none">✈ BOARD AIRCRAFT</button>
+  <div class="panel" style="padding:8px 10px;font-size:11px;max-width:180px">Joystick: move · Swipe: look around · Zombies need 3 hits</div>
+ </div>
+</div>
+<div id="passengerFrame" aria-hidden="true"></div>
+
+<div class="overlay show" id="authOverlay"><div class="modal panel" style="max-width:440px">
+<div class="badge">AIR SIMULATOR ACCOUNT</div><h2 style="margin:8px 0">Sign in or create an account</h2>
+<p class="notice">You need an account to play Air Simulator. Your sign-in is managed by Supabase Auth.</p>
+<div id="browserDataWarning" role="alert" style="margin:10px 0;padding:10px 12px;border:2px solid #ffcc55;border-radius:10px;background:rgba(75,31,5,.94);color:#fff4cf;text-align:center;font-size:13px;font-weight:800;line-height:1.4">⚠️ IMPORTANT: Do not clear your browser or website data! Your credits and game progress could be lost.</div>
+<div id="emailVerificationReminder" role="note" style="margin:10px 0;padding:12px;border:2px solid #55c9f0;border-radius:10px;background:rgba(5,45,68,.96);color:#e8f8ff;text-align:center;font-size:13px;font-weight:800;line-height:1.5">📧 After signing up, you must verify your email address. Check your inbox and verify the email.</div>
+<div class="authSwitch"><button class="uiBtn primary" id="authModeLogin" type="button">SIGN IN</button><button class="uiBtn" id="authModeSignup" type="button">CREATE ACCOUNT</button></div>
+<form id="authForm">
+<label for="authEmail" class="muted">Email address</label><input id="authEmail" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required>
+<label for="authPassword" class="muted">Password (at least 8 characters)</label><input id="authPassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="Password" required>
+<div id="authStatus" role="status" aria-live="polite"></div>
+<button class="uiBtn primary" id="authSubmit" type="submit" style="width:100%">SIGN IN</button>
+</form><p class="notice" style="text-align:center;margin-bottom:0"><a href="privacy.html" target="_blank" rel="noopener" style="color:var(--cyan)">Privacy Policy</a> · <a href="mailto:steho01234@gmail.com" style="color:var(--cyan)">Contact: steho01234@gmail.com</a></p>
+
+</div></div>
+
+<div class="overlay" id="privateTestOverlay"><div class="modal panel" style="max-width:440px">
+<div class="badge">Repeat Password</div><h2 style="margin:8px 0">Repeat Password</h2>
+<input id="privateBucketTestInput" type="password" autocomplete="off" maxlength="100" required style="width:100%;margin:6px 0">
+<button class="uiBtn primary" id="privateBucketTestBtn" style="width:100%">Continue</button>
+<div id="privateBucketTestStatus" class="notice" role="status" aria-live="polite"></div>
+<button class="uiBtn" id="privateTestContinueBtn" style="display:none;width:100%;margin-top:8px">RETURN TO GAME</button>
+</div></div>
+
+<div class="overlay" id="startOverlay"><div class="modal panel" style="max-width:520px;text-align:center"><div class="badge">FLIGHT EXPERIENCE</div><h2 style="margin:8px 0">Welcome to Air Simulator</h2><p class="muted">A mobile 3D flight simulator featuring 20 aircraft, a hangar, and credits.</p><div class="planeIcon" style="font-size:60px">✈️</div><p class="notice">You start with 1,500 credits. Fly, gain experience, and unlock new aircraft. The 3D scenery and flight physics are a playable early version.</p><button class="uiBtn primary" id="startBtn" style="width:100%;padding:13px">START NORMAL FLIGHT</button><div style="margin:16px 0 8px;font-weight:800;color:#dceaf8">SELECT SCENERY</div><p class="muted" style="margin:0 0 8px">New York unlocks after Mission 22 or by purchase. Los Angeles and San Francisco can be purchased with credits. Purchased scenery remains permanently available.</p><div style="display:grid;grid-template-columns:1fr;gap:7px"><button class="uiBtn" id="startNewYorkBtn" style="width:100%">🗽 NEW YORK</button><button class="uiBtn" id="startLosAngelesBtn" style="width:100%">🌴 LOS ANGELES</button><button class="uiBtn" id="startSanFranciscoBtn" style="width:100%">🌉 SAN FRANCISCO</button></div><button class="uiBtn" id="startHangarBtn" style="width:100%;margin-top:8px">BROWSE AIRCRAFT</button><button class="uiBtn" id="authSignOut">SIGN OUT</button></div></div>
+
+<div class="overlay" id="emailSignupOverlay"><div class="modal panel" style="max-width:480px">
+<div class="badge">AIR SIMULATOR</div><h2 style="margin:8px 0">News & Updates</h2>
+<p class="notice">Trage deine Email address freiwillig ein, wenn du Neuigkeiten und Updates zu Air Simulator erhalten möchtest. Die Angabe ist optional und hat keinen Einfluss auf das Spiel.</p>
+<form id="emailSignupForm">
+<input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required>
+<label><input id="signupConsent" type="checkbox" required><span>Ich willige ein, dass meine Email address gespeichert und vom Betreiber von Air Simulator verwendet wird, um mir Neuigkeiten und Updates zum Spiel per E-Mail zu senden. Ich kann meine Einwilligung jederzeit mit Wirkung for die Zukunft widerrufen. Weitere Informationen zur verantwortlichen Person, Speicherdauer, meinen Rechten und zum Widerruf müssen in der Privacy Policy bereitgestellt werden.</span></label>
+<p class="notice">Your email address will not be shared with or sold to third parties through this feature. A separate, specific consent would be required for that.</p>
+<div id="emailSignupStatus" role="status" aria-live="polite"></div>
+<button class="uiBtn primary" id="emailSignupSubmit" type="submit" style="width:100%">EINWILLIGEN & SIGN IN</button>
+<button class="uiBtn" id="emailSignupClose" type="button" style="width:100%">CLOSE</button>
+</form></div></div>
+<div class="overlay" id="missionsOverlay"><div class="modal panel"><div class="modalHead"><div><div class="badge">FLIGHT OPERATIONS</div><h2>Flight Missions</h2><div class="muted">Complete missions and earn credits.</div></div><div style="text-align:right"><div class="muted">YOUR CREDITS</div><strong style="color:var(--cyan);font-size:20px">✦ <span id="missionCredits">1500</span></strong><button class="uiBtn" id="closeMissions" style="display:block;margin-top:7px">CLOSE ✕</button></div></div><div id="missionList" class="planeGrid"></div><div class="modalFooter"><button class="uiBtn" id="missionBackToFlight">RETURN TO FLIGHT</button></div></div></div>
+<div class="overlay" id="hangarOverlay"><div class="modal panel"><div class="modalHead"><div><div class="badge">FLEET MANAGEMENT</div><h2>Aircraft Hangar</h2><div class="muted">Choose your next aircraft</div></div><div style="text-align:right"><div class="muted">YOUR CREDITS</div><strong style="color:var(--cyan);font-size:20px">✦ <span id="hangarCredits">1500</span></strong><button class="uiBtn" id="closeHangar" style="display:block;margin-top:7px">CLOSE ✕</button></div></div><div id="planeGrid" class="planeGrid"></div><h3 style="margin:16px 0 8px">✦ Credit Packs</h3><div class="creditPackages"><div class="creditPackage"><strong>2.000 Credits</strong><span>0,99 €</span><button class="uiBtn primary buyCreditsBtn" data-credits="2000" data-price="0.99">SELECT PACK</button></div><div class="creditPackage"><strong>5.000 Credits</strong><span>1,99 €</span><button class="uiBtn primary buyCreditsBtn" data-credits="5000" data-price="1.99">SELECT PACK</button></div><div class="creditPackage"><strong>10.000 Credits</strong><span>2,49 €</span><button class="uiBtn primary buyCreditsBtn" data-credits="10000" data-price="2.49">SELECT PACK</button></div><div class="creditPackage"><strong>20.000 Credits</strong><span>3,99 €</span><button class="uiBtn primary buyCreditsBtn" data-credits="20000" data-price="3.99">SELECT PACK</button></div></div></div></div>
+<div class="overlay" id="pauseOverlay"><div class="modal panel" style="max-width:360px;text-align:center"><h2>Flight Paused</h2><p class="muted">Your flight has been paused.</p><button class="uiBtn primary" id="resumeBtn" style="width:100%">RESUME FLIGHT</button><button class="uiBtn" id="pauseHangarBtn" style="width:100%;margin-top:8px">OPEN HANGAR</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const SUPABASE_URL='https://xkhbczvjboykerfwrnmn.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_MJ-ro-VY7Xy7T1z4qouORA_mA_zdfyx';
+const $=id=>document.getElementById(id);
+function userNeedsPrivateTest(user){if(!user)return false;try{if(localStorage.getItem('privateTestSaved:'+user.id)==='1')return false;}catch{}return user.user_metadata?.private_test_saved!==true;}
+function markPrivateTestSavedLocally(user){if(!user)return;try{localStorage.setItem('privateTestSaved:'+user.id,'1');}catch{}}
+function showPrivateTestOverlay(){ $('privateTestContinueBtn').style.display='none'; $('privateTestOverlay').classList.add('show'); }
+const supabase = createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+ auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+
+const paypal='https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U';
+const planes=[
+{name:'Skytrainer S1',type:'Single-engine trainer',price:0,speed:220,color:0xf2f4f7,emoji:'🛩️',size:1},
+{name:'Cloudrunner L2',type:'Light aircraft',price:250,speed:240,color:0xffcf55,emoji:'🛩️',size:1},
+{name:'AeroTwin 65',type:'Twin-engine turboprop',price:650,speed:460,color:0xe9edf5,emoji:'✈️',size:1.25},
+{name:'Islandhopper T6',type:'STOL · Regional',price:900,speed:300,color:0xffb64d,emoji:'✈️',size:1.3},
+{name:'Skycruiser P12',type:'Business turboprop',price:1200,speed:500,color:0xffffff,emoji:'✈️',size:1.25},
+{name:'Jetstream R90',type:'Regional jet',price:1800,speed:870,color:0x58b6ff,emoji:'🛫',size:1.7},
+{name:'Airliner A20',type:'Narrow-body Airliner',price:2500,speed:850,color:0xf5f7fb,emoji:'🛫',size:1.8},
+{name:'Airliner B70',type:'Narrow-body Airliner',price:2800,speed:850,color:0xffffff,emoji:'🛫',size:1.8},
+{name:'Airliner A21X',type:'Long-range option',price:3200,speed:880,color:0xe8f4ff,emoji:'🛫',size:2},
+{name:'Skyliner M75',type:'Medium-haul jet',price:3600,speed:900,color:0xf0f2f5,emoji:'🛫',size:1.9},
+{name:'Longhaul A33',type:'Wide-body Airliner',price:4200,speed:910,color:0xe7edf4,emoji:'✈️',size:2.3},
+{name:'Dreamliner X8',type:'Efficient long-haul jet',price:4800,speed:920,color:0xf9fbff,emoji:'✈️',size:2.4},
+{name:'AeroStar A35',type:'Modern long-haul jet',price:5500,speed:930,color:0xf4f5fa,emoji:'✈️',size:2.5},
+{name:'Longhaul B77',type:'Large long-haul jet',price:6200,speed:930,color:0xffffff,emoji:'✈️',size:2.7},
+{name:'Skygiant A80',type:'Double-decker jumbo jet',price:7000,speed:900,color:0xeaf0f7,emoji:'🛬',size:3},
+{name:'Skygiant B48',type:'Jumbo jet',price:7500,speed:920,color:0xf4f7fa,emoji:'🛬',size:2.9},
+{name:'Sonic Arrow S1',type:'Supersonic passenger jet',price:8500,speed:2100,color:0xf8fbff,emoji:'🚀',size:2.1},
+{name:'CargoLift C13',type:'Military transport aircraft',price:5000,speed:590,color:0x7b8d77,emoji:'🛩️',size:2.1},
+{name:'CargoLift A40',type:'Tactical transport aircraft',price:5800,speed:780,color:0x899889,emoji:'🛩️',size:2.2},
+{name:'FalconStrike F18',type:'Fighter jet',price:10000,speed:1900,color:0x8899aa,emoji:'🛩️',size:1.5}
+];
+const saved=(()=>{try{return JSON.parse(localStorage.getItem('airSimSave')||'{}')}catch{return {}}})();
+let credits=Number.isFinite(saved.credits)?saved.credits:1500,owned=new Set(Array.isArray(saved.owned)?saved.owned:[0]),current=Math.max(0,Math.min(19,saved.current||0)),purchasedSceneries=new Set(Array.isArray(saved.purchasedSceneries)?saved.purchasedSceneries:[]);if(!owned.has(0))owned.add(0);
+const missions=[{name:'1. Takeoff Training',type:'takeoff',desc:'Line up on the runway, accelerate, take off, climb to at least 80 m, and retract the landing gear.',reward:250,skip:500},{name:'2. Airport Landing',type:'landing',desc:'Line up with the runway, extend the landing gear, and touch down with minimal bank and an appropriate approach speed.',reward:400,skip:650},{name:'3. Cargo Transport',type:'transport',desc:'Fly to the marked cargo area. For a safe delivery, pass through the target area at low altitude and reduced speed.',reward:500,skip:750,target:[260,0,-650]},{name:'4. Engine Failure',type:'engine',desc:'The engine will fail after 12 seconds. Keep the nose steady, glide, extend the landing gear, and land on the runway.',reward:700,skip:900},{name:'5. Regional Flight',type:'transport',desc:'Fly to the distant regional destination. Control your speed and reach the target at a safe altitude.',reward:850,skip:1100,target:[-350,0,-1150]},{name:'6. Express Cargo: Outpost',type:'cargo',desc:'You have 150 seconds to pick up cargo at the outpost and return it to your home airport. Both legs are required.',reward:950,skip:1250,target:[300,0,-700],timeLimit:150},{name:'7. Night Cargo in the Rain',type:'nightCargo',desc:'Pick up cargo in the dark and return to the lit runway within 190 seconds. Watch for buildings and control your speed.',reward:1250,skip:1600,target:[-420,0,-850],timeLimit:190},{name:'8. Night Flight Between Airports',type:'night',desc:'Fly to the distant airfield at night, then return to your departure airport. You have 220 seconds.',reward:1400,skip:1800,target:[480,0,-1250],timeLimit:220},{name:'9. City Courier',type:'city',desc:'Fly through the marked corridors between skyscrapers without touching any buildings, then return to the airport. Time limit: 210 seconds.',reward:1500,skip:1900,checkpoints:[[260,0,-430],[520,0,-620],[760,0,-850]],timeLimit:210},{name:'10. Night City Flight',type:'nightCity',desc:'Follow the waypoints through the city at night. Keep clear of buildings and then return to the airport. Time limit: 240 seconds.',reward:1800,skip:2300,checkpoints:[[-280,0,-480],[-540,0,-720],[-300,0,-1000]],timeLimit:240},{name:'11. Jungle Cargo Flight',type:'cargo',desc:'Fly to the remote jungle outpost, pick up the cargo, and return to your home airport within 210 seconds.',reward:1900,skip:2400,target:[-650,0,-900],timeLimit:210},{name:'12. River Gorge',type:'jungleRoute',desc:'Follow the waypoints along the river through the jungle. Maintain a controlled altitude and return to the airport. Time limit: 240 seconds.',reward:2100,skip:2600,checkpoints:[[-320,0,-520],[-520,0,-760],[-760,0,-1000],[-560,0,-1280]],timeLimit:240},{name:'13. Night Jungle Rescue Flight',type:'nightJungleRoute',desc:'Fly at night to three marked rescue points in the dense jungle, then return safely to your home airport. Time limit: 270 seconds.',reward:2400,skip:2900,checkpoints:[[-850,0,-500],[-980,0,-820],[-760,0,-1150]],timeLimit:270},{name:'14. Above the Treetops',type:'jungleRoute',desc:'Fly through the marked corridors above the treetops. Stay high enough without losing control, then land at your home airport. Time limit: 250 seconds.',reward:2200,skip:2700,checkpoints:[[-250,0,-900],[-500,0,-1120],[-820,0,-900],[-950,0,-600]],timeLimit:250},{name:'15. Supply the Jungle Outpost',type:'cargo',desc:'Deliver supplies to the jungle outpost and then return to the runway. You have 230 seconds.',reward:2600,skip:3200,target:[-1050,0,-1350],timeLimit:230},{name:'16. Mountain Valley Training',type:'mountainRoute',desc:'Follow the high markers through a narrow mountain valley. Stay above the valley floor and avoid the slopes, then return to the airport. Time limit: 260 seconds.',reward:2800,skip:3400,checkpoints:[[950,0,-500],[1120,0,-720],[1320,0,-900],[1510,0,-1120]],timeLimit:260},{name:'17. Narrow Gorge',type:'mountainRoute',desc:'Fly precisely between steep rock walls. Touching a mountain fails the mission immediately. Return to the airport after reaching all waypoints.',reward:3200,skip:3800,checkpoints:[[1760,0,-750],[1540,0,-780],[1340,0,-800],[1160,0,-1020]],timeLimit:280},{name:'18. Night Flight in the Mountains',type:'nightMountainRoute',desc:'Fly through a narrow valley at night. Follow the glowing waypoints and stay clear of the mountain slopes. Time limit: 300 seconds.',reward:3600,skip:4200,checkpoints:[[980,0,-1250],[1180,0,-1400],[1390,0,-1550],[1590,0,-1690]],timeLimit:300},{name:'19. Mountain Rescue',type:'mountainRoute',desc:'Reach three marked rescue points in the mountains without touching a peak or rock wall. Then return to the airport.',reward:3900,skip:4600,checkpoints:[[1900,0,-1180],[1650,0,-1280],[1420,0,-1450]],timeLimit:300},{name:'20. Alpine Pass in a Storm',type:'nightMountainRoute',desc:'Cross the challenging Alpine pass between high mountains. Follow the markers precisely and avoid all terrain. Time limit: 320 seconds.',reward:4500,skip:5200,checkpoints:[[900,0,-1500],[1170,0,-1600],[1450,0,-1400],[1800,0,-1250]],timeLimit:320},{name:'21. Belly Landing Without Landing Gear',type:'bellyLanding',desc:'Keep the landing gear retracted. Make a stable approach and land the aircraft on the runway without extending the gear. Do not extend the landing gear during this mission!',reward:5000,skip:5800,timeLimit:180},{name:'22. Pick Up Your Friend in New York',type:'newYorkPickup',desc:'Fly to the airport in New York within 360 seconds. Land safely to pick up your friend, then return to your departure airport. The mission is complete only after a safe landing at your home airport.',reward:6500,skip:7800,target:[-850,0,-13490],timeLimit:360},{name:'23. Fly Through the New York Skyline',type:'newYorkSkyline',desc:'Fly through the New York skyline within 480 seconds. Follow all waypoints between the skyscrapers without touching any buildings. Then return to your home airport and land safely.',reward:7200,skip:8500,checkpoints:[[-145,0,-13100],[-65,0,-13320],[75,0,-13510],[165,0,-13720],[55,0,-13930],[-95,0,-14120],[-180,0,-13850]],timeLimit:480},{name:'24. Fly Through the Severe Thunderstorm',type:'stormFlight',desc:'Fly through a severe thunderstorm with heavy rain, dark clouds, and lightning. Reach the marked area at a safe altitude, then return. Do not crash. Time limit: 360 seconds.',reward:8000,skip:9500,target:[420,0,-1450],timeLimit:360},{name:'25. Emergency Glide to New York',type:'nyEngineEmergency',desc:'Fly to New York. The engine will fail midway through the trip. Glide without engine power to the marked airport and land safely. Touching the ground before reaching the airport will fail the mission. Time limit: 600 seconds.',reward:9500,skip:11000,target:[-850,0,-13490],timeLimit:600}];
+let completedMissions=new Set(Array.isArray(saved.completedMissions)?saved.completedMissions:[]),purchasedMissions=new Set(Array.isArray(saved.purchasedMissions)?saved.purchasedMissions:[]),activeMission=-1,missionStartedAt=0,engineFailed=false,missionMarker=null,missionMarkerRing=null,missionPhase='outbound',missionCheckpoint=0,nightMode=false,stormMode=false,stormLight=null,originalBackground=0x8cccf5,cityBuildingBounds=[],mountainBounds=[],missionFailed=false;
+function persistMission(){save();try{const s=JSON.parse(localStorage.getItem('airSimSave')||'{}');s.completedMissions=[...completedMissions];s.purchasedMissions=[...purchasedMissions];localStorage.setItem('airSimSave',JSON.stringify(s));}catch{}}
+function makeMissionMarker(target,runwayLevel=false){if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}const g=new THREE.Group();const raiseMarker=[16,18,19].includes(activeMission)&&!(target[0]===0&&target[2]===-180);const markerColor=nightMode?0x67e8ff:0xffcf54;const beamHeight=raiseMarker?190:70;const beam=new THREE.Mesh(new THREE.CylinderGeometry(raiseMarker?4:2.4,raiseMarker?4:2.4,beamHeight,10),new THREE.MeshBasicMaterial({color:markerColor,transparent:true,opacity:raiseMarker?.88:.45,depthTest:raiseMarker?false:true,depthWrite:false}));beam.position.y=beamHeight/2;beam.renderOrder=raiseMarker?1000:0;g.add(beam);const ring=new THREE.Mesh(new THREE.TorusGeometry(raiseMarker?20:12,raiseMarker?2.6:1.5,8,24),new THREE.MeshBasicMaterial({color:markerColor,depthTest:raiseMarker?false:true,depthWrite:false}));ring.rotation.x=Math.PI/2;ring.position.y=runwayLevel?1.5:raiseMarker?125:39;ring.renderOrder=raiseMarker?1001:0;g.add(ring);g.position.set(target[0],runwayLevel?-14.25:-10+(target[1]||0)+(raiseMarker?35:0),target[2]);scene.add(g);missionMarker=g;missionMarkerRing=ring;}
+function makeAirportReturnMarker(){makeMissionMarker([0,0,-180],[5,6,7,8,9,10,14].includes(activeMission));}
+function missionTarget(m){if(m.checkpoints)return m.checkpoints[missionCheckpoint]||[0,0,0];return m.target||[0,0,0];}
+function setStormMode(on){stormMode=on;if(!scene)return;if(on){scene.background=new THREE.Color(0x27364b);scene.fog.color.setHex(0x27364b);scene.fog.near=100;scene.fog.far=1150;if(rainPoints&&rainPoints.material){rainPoints.material.opacity=.95;rainPoints.material.size=.24;}}else{if(rainPoints&&rainPoints.material){rainPoints.material.opacity=.7;rainPoints.material.size=.16;}scene.background=new THREE.Color(nightMode?0x071226:originalBackground);scene.fog.color.setHex(nightMode?0x101d35:originalBackground);scene.fog.near=nightMode?180:450;scene.fog.far=nightMode?1500:2300;}if(stormLight)stormLight.intensity=0;}
+function setNightMode(on){nightMode=on;if(!scene)return;scene.background=new THREE.Color(on?0x071226:originalBackground);scene.fog.color.setHex(on?0x101d35:originalBackground);scene.fog.near=on?180:450;scene.fog.far=on?1500:2300;}
+function failMission(reason){if(activeMission<0)return;const retryIndex=activeMission;missionFailed=true;activeMission=-1;engineFailed=false;if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}setNightMode(false);setStormMode(false);paused=true;$('status').textContent='MISSION FAILED';alert('Mission failed: '+reason+' The same mission will now restart.');renderMissions();startMission(retryIndex);}
+function renderMissions(){
+ $('missionCredits').textContent=credits.toLocaleString('de-AT');$('missionList').innerHTML='';
+ missions.forEach((m,i)=>{
+  const done=completedMissions.has(i),active=activeMission===i,unlocked=i===0||completedMissions.has(i-1)||purchasedMissions.has(i),locked=!unlocked;
+  const card=document.createElement('div');card.className='planeCard';
+  card.style.opacity=locked?'.82':'1';
+  const icon=done?'✅':locked?'🔒':m.type==='engine'?'⚠️':(m.type==='landing'||m.type==='bellyLanding')?'🛬':m.type==='takeoff'?'🛫':m.type==='stormFlight'?'⛈️':m.type.includes('mountain')?'🏔️':m.type.includes('jungle')||m.name.toLowerCase().includes('jungle')||m.name.toLowerCase().includes('treetops')||m.name.toLowerCase().includes('river')?'🌴':'📦';
+  const state=done?'COMPLETED · Reward already claimed':locked?'LOCKED · Complete or unlock the previous mission':'Reward: ✦ '+m.reward.toLocaleString('de-AT');
+  const startLabel=active?'MISSION IN PROGRESS':done?'REPLAY MISSION':locked?'🔒 LOCKED':'START MISSION';
+  const secondLabel=locked?'COST: '+m.skip.toLocaleString('de-AT')+' CREDITS TO UNLOCK':'COST: '+m.skip.toLocaleString('de-AT')+' CREDITS TO SKIP';
+  card.innerHTML='<div class="planeIcon">'+icon+'</div><h3>'+m.name+'</h3><p>'+m.desc+'</p><div class="price">'+state+'</div><button class="uiBtn '+(active?'primary':'')+'" '+((active||locked)?'disabled':'')+'>'+startLabel+'</button><button class="uiBtn" style="width:100%;margin-top:6px" '+(done||active?'disabled':'')+'>'+secondLabel+'</button>';
+  const bs=card.querySelectorAll('button');
+  bs[0].onclick=()=>startMission(i);
+  bs[1].onclick=()=>{if(locked)unlockMission(i);else skipMission(i);};
+  $('missionList').appendChild(card);
+ });
+}
+function unlockMission(i){
+ if(i<1||i>=missions.length||completedMissions.has(i)||purchasedMissions.has(i))return;
+ const m=missions[i];
+ if(credits<m.skip){alert('Du brauchst '+m.skip.toLocaleString('de-AT')+' credits to unlock this mission.');return;}
+ if(!confirm('Would you like to '+m.name+' for '+m.skip.toLocaleString('de-AT')+' credits permanently?'))return;
+ credits-=m.skip;purchasedMissions.add(i);persistMission();ui();renderMissions();$('status').textContent='MISSION UNLOCKED';
+}
+function openMissions(){paused=true;$('missionsOverlay').classList.add('show');renderMissions()}
+function startMission(i){if(activeMission===i)return;if(i>0&&!completedMissions.has(i-1)&&!purchasedMissions.has(i)){alert('This mission is locked. Complete the previous mission first or unlock this mission with credits.');return;}$('nextMissionBtn').style.display='none';if(onFoot)setOnFootMode(false);planeGroup.visible=true;activeMission=i;missionFailed=false;missionPhase='outbound';missionCheckpoint=0;engineFailed=false;throttle=i===1||i===3||missions[i].type==='bellyLanding'?45:65;$('throttle').value=throttle;gear=true;resetFlight();setNightMode(missions[i].type==='night'||missions[i].type==='nightCargo'||missions[i].type==='nightCity'||missions[i].type==='nightJungleRoute'||missions[i].type==='nightMountainRoute');setStormMode(missions[i].type==='stormFlight');if(missions[i].target)makeMissionMarker(missions[i].target);else if(missions[i].checkpoints)makeMissionMarker(missions[i].checkpoints[0]);else if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}if(i===1||missions[i].type==='bellyLanding'){altitude=100;planeGroup.position.set(0,-13.3+altitude*.22,360);speed=specApproachSpeed();}if(i===3){altitude=120;planeGroup.position.set(0,-13.3+altitude*.22,300);speed=specApproachSpeed();missionStartedAt=flightTime;}else missionStartedAt=flightTime;if(missions[i].type==='nyEngineEmergency'){altitude=650;planeGroup.position.set(0,-13.3+altitude*.22,0);heading=0;speed=planes[current].speed/3.6*.72;throttle=0;$('throttle').value=0;$('throttleVal').textContent='0%';makeMissionMarker(missions[i].target);}$('gearBtn').textContent='▱ LANDING GEAR: AUS';$('missionsOverlay').classList.remove('show');paused=false;$('status').textContent='MISSION: '+missions[i].name.toUpperCase();if(missions[i].type==='zombieRescue'){ $('footControls').style.display='flex';$('exitPlaneBtn').style.display='';$('shootBtn').style.display='none';$('enterPlaneBtn').style.display='none';}else $('footControls').style.display='none';renderMissions();}
+function specApproachSpeed(){return Math.max(24,planes[current].speed/3.6*.38);}
+function landingSpeedLimit(){return Math.max(90,Math.min(240,planes[current].speed*.32));}
+function skipMission(i){if(completedMissions.has(i))return;const m=missions[i];if(credits<m.skip){alert('Du brauchst '+m.skip+' credits to skip this mission.');return;}credits-=m.skip;completedMissions.add(i);if(activeMission===i)activeMission=-1;persistMission();ui();renderMissions();$('status').textContent='MISSION SKIPPED';}
+function finishMission(i){if(i<0)return;const m=missions[i];const alreadyCompleted=completedMissions.has(i);if(!alreadyCompleted){completedMissions.add(i);credits+=m.reward;persistMission();ui();}activeMission=-1;$('footControls').style.display='none';engineFailed=false;setNightMode(false);setStormMode(false);if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}$('nextMissionBtn').style.display='inline-block';alert(alreadyCompleted?'Mission completed again: '+m.name+'! Your reward was already credited when you first completed it.':'Mission completed: '+m.name+'! You receive '+m.reward+' credits.');renderMissions();updateSceneryButtons();}
+let cloudSaveUserId=null,cloudSaveReady=false,cloudSaveTimer=null,cloudSaveErrorShown=false;
+function getGameProgress(){return {version:1,credits,owned:[...owned],current,completedMissions:[...completedMissions],purchasedMissions:[...purchasedMissions],purchasedSceneries:[...purchasedSceneries]};}
+function applyGameProgress(progress){
+ if(!progress||typeof progress!=='object')return;
+ if(Number.isFinite(progress.credits))credits=Math.max(0,Math.floor(progress.credits));
+ if(Array.isArray(progress.owned)){owned=new Set(progress.owned.filter(n=>Number.isInteger(n)&&n>=0&&n<planes.length));}
+ if(!owned.has(0))owned.add(0);
+ if(Number.isInteger(progress.current))current=Math.max(0,Math.min(planes.length-1,progress.current));
+ if(Array.isArray(progress.completedMissions))completedMissions=new Set(progress.completedMissions.filter(n=>Number.isInteger(n)&&n>=0&&n<missions.length));
+ if(Array.isArray(progress.purchasedMissions))purchasedMissions=new Set(progress.purchasedMissions.filter(n=>Number.isInteger(n)&&n>=0&&n<missions.length));
+ if(Array.isArray(progress.purchasedSceneries))purchasedSceneries=new Set(progress.purchasedSceneries.filter(n=>['New York','Los Angeles','San Francisco'].includes(n)));
+}
+async function loadCloudProgress(user){
+ cloudSaveReady=false;cloudSaveUserId=user?.id||null;
+ if(!user){cloudSaveUserId=null;return;}
+ try{
+  const {data,error}=await supabase.from('air_simulator_saves').select('progress').eq('user_id',user.id).maybeSingle();
+  if(error)throw error;
+  if(data?.progress){applyGameProgress(data.progress);try{localStorage.setItem('airSimSave',JSON.stringify(getGameProgress()));}catch{}}
+  else{
+   // Migrate this browser's existing save for the account's first cloud save.
+   const local=(()=>{try{return JSON.parse(localStorage.getItem('airSimSave')||'{}')}catch{return {}}})();
+   if(local&&Object.keys(local).length)applyGameProgress(local);
+  }
+  cloudSaveReady=true;cloudSaveErrorShown=false;
+  ui();renderHangar();renderMissions();updateSceneryButtons();
+  if(data?.progress)$('status').textContent='GAME PROGRESS LOADED FROM YOUR ACCOUNT';
+  else save();
+ }catch(err){
+  cloudSaveReady=false;
+  console.error('Cloud-Spielstand konnte nicht geladen werden:',err);
+  if(!cloudSaveErrorShown){cloudSaveErrorShown=true;$('authStatus').textContent='Account saving is not set up yet. Please run the SQL for air_simulator_saves in Supabase first. Your local save will remain available.';$('status').textContent='ACCOUNT SAVE NOT SET UP · RUN SUPABASE SQL';}
+ }
+}
+function queueCloudSave(){
+ if(!cloudSaveReady||!cloudSaveUserId)return;
+ clearTimeout(cloudSaveTimer);
+ cloudSaveTimer=setTimeout(async()=>{
+  const userId=cloudSaveUserId,progress=getGameProgress();
+  try{
+   const {error}=await supabase.from('air_simulator_saves').upsert({user_id:userId,progress,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+   if(error)throw error;
+   if(cloudSaveUserId===userId)$('status').textContent='GAME PROGRESS SAVED TO ACCOUNT';
+  }catch(err){
+   console.error('Cloud save failed:',err);
+   if(!cloudSaveErrorShown){cloudSaveErrorShown=true;$('status').textContent='Cloud save failed. Check the Supabase table and permissions.';}
+  }
+ },700);
+}
+function saveLocalProgress(){try{localStorage.setItem('airSimSave',JSON.stringify(getGameProgress()));return true;}catch(err){console.warn('Local save failed:',err);return false;}}
+function save(){saveLocalProgress();queueCloudSave();}
+// Lokalen Spielstand regelmäßig und beim Verlassen/Hintergrundwechsel sichern.
+window.addEventListener('pagehide',saveLocalProgress);
+window.addEventListener('beforeunload',saveLocalProgress);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveLocalProgress();});
+setInterval(saveLocalProgress,10000);
+function ui(){ $('credits').textContent=credits.toLocaleString('de-AT');$('hangarCredits').textContent=credits.toLocaleString('de-AT');$('planeName').textContent=planes[current].name+' · '+planes[current].type;$('speed').textContent=Math.round(Math.max(0,speed*3.6));$('altitude').textContent=Math.max(0,Math.round(120+altitude));$('throttleVal').textContent=throttle+'%';}
+let scene,camera,renderer,planeGroup,clock=new THREE.Clock(),speed=0,altitude=0,throttle=35,paused=false,gear=true,braking=false,view=0,steerX=0,steerY=0,heading=0,autopilotEnabled=false,autopilotHeading=0,autopilotAltitude=120,autoLandingEnabled=false,flightTime=0,gyroEnabled=false,gyroZeroBeta=null,gyroZeroGamma=null,gyroX=0,gyroY=0,rollAngle=0,pitchAngle=0,yawRate=0,stalling=false,rainPoints=null,rainPositions=null,audioCtx=null,engineOsc=null,engineGain=null,rainGain=null,rainFilter=null,rainNoiseSource=null;
+let flightRouteTarget=null,flightRouteName='';
+try{
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x8cccf5);scene.fog=new THREE.Fog(0x8cccf5,450,2300);
+ camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,4000);
+ renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);
+ // Dauerregen: sichtbare Regentropfen um das Flugzeug.
+ const rainGeo=new THREE.BufferGeometry();rainPositions=new Float32Array(900*3);for(let i=0;i<900;i++){rainPositions[i*3]=(Math.random()-.5)*150;rainPositions[i*3+1]=Math.random()*90-25;rainPositions[i*3+2]=(Math.random()-.5)*150;}rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));const rainMat=new THREE.PointsMaterial({color:0xd8edff,size:.16,transparent:true,opacity:.7,depthWrite:false});rainPoints=new THREE.Points(rainGeo,rainMat);scene.add(rainPoints);
+ const hemi=new THREE.HemisphereLight(0xd8edff,0x657b55,1.45);scene.add(hemi);const sun=new THREE.DirectionalLight(0xffffff,2.3);sun.position.set(200,400,100);scene.add(sun);stormLight=new THREE.PointLight(0xc9e6ff,0,900);stormLight.position.set(0,180,-120);scene.add(stormLight);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000),new THREE.MeshStandardMaterial({color:0x5e8d54,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-15;scene.add(ground);
+ const ocean=new THREE.Mesh(new THREE.PlaneGeometry(9000,60000),new THREE.MeshStandardMaterial({color:0x3f9fca,roughness:.65}));ocean.rotation.x=-Math.PI/2;ocean.position.set(0,-18,-29000);scene.add(ocean);
+ // Patchwork fields and roads create a wide, lightweight landscape.
+ for(let i=0;i<140;i++){let x=(Math.random()-.5)*1900,z=-Math.random()*2600-80,w=30+Math.random()*130,d=35+Math.random()*180;let m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshStandardMaterial({color:[0x68985a,0x789e5d,0x587f4b,0x9aa96a][i%4],roughness:1}));m.rotation.x=-Math.PI/2;m.position.set(x,-14.7,z);scene.add(m)}
+ const runway=new THREE.Mesh(new THREE.PlaneGeometry(65,1300),new THREE.MeshStandardMaterial({color:0x353d45,roughness:1}));runway.rotation.x=-Math.PI/2;runway.position.set(0,-14.3,-180);scene.add(runway);
+ for(let z=-800;z<450;z+=70){let stripe=new THREE.Mesh(new THREE.PlaneGeometry(2,32),new THREE.MeshBasicMaterial({color:0xe6e7d8}));stripe.rotation.x=-Math.PI/2;stripe.position.set(0,-14.1,z);scene.add(stripe)}
+ // Terminal and hangars beside runway.
+ function building(x,y,z,w,h,d,color){let b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.8}));b.position.set(x,y,z);scene.add(b);cityBuildingBounds.push({x,z,w,d,y,h,mesh:b});return b}
+ building(85,0,-180,100,25,95,0xb7c8d2);building(-95,-1,-250,65,22,85,0xc7d0d5);building(160,-7,-380,55,10,130,0x9aa8b3);
+ // Distant city blocks: wide streets and varied building heights form fly-through corridors.
+ for(let ix=0;ix<8;ix++){for(let iz=0;iz<7;iz++){if((ix===2||ix===5)&&(iz===1||iz===3||iz===5))continue;const x=330+ix*75,z=-360-iz*105,w=26+Math.random()*20,d=28+Math.random()*22,h=24+Math.random()*100;building(x,h/2-15,z,w,h,d,[0x667b91,0x7f8fa0,0x9aa6b2,0x586b80][(ix+iz)%4]);if(Math.random()>.35)building(x+35,h*.28-15,z+30,14,h*.56,14,0x8597a8);}}
+ // New jungle biome: layered tropical canopy, broad-leaf trees, clearings and a winding river.
+ const jungleGround=new THREE.Mesh(new THREE.PlaneGeometry(1700,1900),new THREE.MeshStandardMaterial({color:0x285b35,roughness:1}));
+ jungleGround.rotation.x=-Math.PI/2;jungleGround.position.set(-650,-14.55,-950);scene.add(jungleGround);
+ const riverMat=new THREE.MeshStandardMaterial({color:0x258fb1,roughness:.25,metalness:.05});
+ const riverPoints=[[-100,-380],[-280,-540],[-450,-650],[-570,-830],[-760,-980],[-900,-1190],[-1080,-1370],[-1200,-1570]];
+ for(let i=0;i<riverPoints.length-1;i++){const a=riverPoints[i],b=riverPoints[i+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);const water=new THREE.Mesh(new THREE.PlaneGeometry(30,len+18),riverMat);water.rotation.x=-Math.PI/2;water.rotation.z=Math.atan2(dx,dz);water.position.set((a[0]+b[0])/2,-14.42,(a[1]+b[1])/2);scene.add(water);}
+ const trunkMat=new THREE.MeshStandardMaterial({color:0x59402b,roughness:1}),leafMats=[0x174d2d,0x226b36,0x2f7d3d,0x397f36,0x12502c].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1}));
+ for(let i=0;i<300;i++){
+   const x=-1250+Math.random()*1200,z=-350-Math.random()*1450;
+   if(Math.abs(x+650)<80&&z>-1000&&z<-450)continue;
+   const h=12+Math.random()*25,r=2.3+Math.random()*3.8,g=new THREE.Group();
+   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(r*.45,r,h,6),trunkMat);trunk.position.y=-14.5+h/2;g.add(trunk);
+   const canopy=new THREE.Mesh(new THREE.SphereGeometry(r*2.5,7,6),leafMats[i%leafMats.length]);canopy.scale.set(1,0.8+Math.random()*.6,1);canopy.position.y=-14.5+h*.82;g.add(canopy);
+   const top=new THREE.Mesh(new THREE.ConeGeometry(r*1.9,h*.55,7),leafMats[(i+2)%leafMats.length]);top.position.y=-14.5+h*.95;g.add(top);
+   g.position.set(x,0,z);scene.add(g);
+ }
+ // A few clearings mark jungle settlements and rescue pads.
+ for(const [x,z,rx,rz] of [[-650,-900,70,55],[-1050,-1350,55,45],[-320,-520,45,40]]){
+   const clearing=new THREE.Mesh(new THREE.CircleGeometry(1,20),new THREE.MeshStandardMaterial({color:0x7e8b4b,roughness:1}));
+   clearing.rotation.x=-Math.PI/2;clearing.scale.set(rx,rz,1);clearing.position.set(x,-14.48,z);scene.add(clearing);
+ }
+ // Remote runways give the regional and mountain destinations visible airfields.
+ function remoteRunway(x,z,length=420,width=42){
+   const strip=new THREE.Mesh(new THREE.PlaneGeometry(width,length),new THREE.MeshStandardMaterial({color:0x353d45,roughness:1}));
+   strip.rotation.x=-Math.PI/2;strip.position.set(x,-14.25,z);scene.add(strip);
+   for(let zz=z-length/2+24;zz<z+length/2-12;zz+=48){const mark=new THREE.Mesh(new THREE.PlaneGeometry(1.8,20),new THREE.MeshBasicMaterial({color:0xe6e7d8}));mark.rotation.x=-Math.PI/2;mark.position.set(x,-14.05,zz);scene.add(mark);}
+   const apron=new THREE.Mesh(new THREE.PlaneGeometry(width+35,34),new THREE.MeshStandardMaterial({color:0x777f83,roughness:1}));
+   apron.rotation.x=-Math.PI/2;apron.position.set(x,-14.3,z-length/2-22);scene.add(apron);
+ }
+ remoteRunway(-350,-1150,300,38);remoteRunway(480,-1250,360,42);remoteRunway(-1050,-1350,260,34);
+ 
+// ABANDONED-CITY OVERGROWTH: trees, vines and shrubs reclaim streets and rooftops.
+function addOvergrownCity(cx,cz,spreadX,spreadZ,count){
+  const trunkMat=new THREE.MeshStandardMaterial({color:0x514234,roughness:1});
+  const leafMats=[0x244b2b,0x315c32,0x3d6b37,0x527a3c,0x1d4027].map(color=>new THREE.MeshStandardMaterial({color,roughness:1}));
+  const vineMat=new THREE.MeshStandardMaterial({color:0x315c32,roughness:1});
+  for(let i=0;i<count;i++){
+    const x=cx+(Math.random()-.5)*spreadX,z=cz+(Math.random()-.5)*spreadZ,h=10+Math.random()*23,r=2.4+Math.random()*4.5;
+    const tree=new THREE.Group(),trunk=new THREE.Mesh(new THREE.CylinderGeometry(r*.45,r,h,6),trunkMat);trunk.position.y=h/2;tree.add(trunk);
+    for(let j=0;j<4;j++){const crown=new THREE.Mesh(new THREE.SphereGeometry(r*(1.25+Math.random()*.65),7,6),leafMats[Math.floor(Math.random()*leafMats.length)]);crown.position.set((Math.random()-.5)*r*1.8,h*.58+Math.random()*h*.45,(Math.random()-.5)*r*1.8);crown.scale.y=.85+Math.random()*.8;tree.add(crown);}
+    tree.position.set(x,-14.5,z);scene.add(tree);
+    if(i%3===0){const bush=new THREE.Mesh(new THREE.SphereGeometry(5+Math.random()*7,7,5),leafMats[i%leafMats.length]);bush.scale.y=.55;bush.position.set(x+12,-11.7,z-8);scene.add(bush);}
+    if(i%5===0){const vine=new THREE.Mesh(new THREE.CylinderGeometry(.35,.65,8+Math.random()*13,5),vineMat);vine.position.set(x+5,-4,z+5);vine.rotation.z=(Math.random()-.5)*.7;scene.add(vine);}
+  }
+  const grassMat=new THREE.MeshStandardMaterial({color:0x426a35,roughness:1});
+  for(let i=0;i<Math.floor(count/5);i++){const patch=new THREE.Mesh(new THREE.PlaneGeometry(10+Math.random()*24,14+Math.random()*30),grassMat);patch.rotation.x=-Math.PI/2;patch.position.set(cx+(Math.random()-.5)*spreadX,-14.43,cz+(Math.random()-.5)*spreadZ);scene.add(patch);}
+}
+
+// NEW YORK: an island skyline appears after the long ocean crossing.
+ const nySceneStart=scene.children.length,nyBoundsStart=cityBuildingBounds.length;
+ const nyIsland=new THREE.Mesh(new THREE.PlaneGeometry(4000,4000),new THREE.MeshStandardMaterial({color:0x777d72,roughness:1}));
+ nyIsland.rotation.x=-Math.PI/2;nyIsland.position.set(40,-14.62,-3700);scene.add(nyIsland);
+ const nyRoadMat=new THREE.MeshStandardMaterial({color:0x343b42,roughness:1}),nyParkMat=new THREE.MeshStandardMaterial({color:0x46734c,roughness:1});
+ for(let x=-850;x<=850;x+=170){const road=new THREE.Mesh(new THREE.PlaneGeometry(16,1900),nyRoadMat);road.rotation.x=-Math.PI/2;road.position.set(x,-14.48,-3700);scene.add(road);}
+ for(let z=-2850;z>=-4700;z-=190){const road=new THREE.Mesh(new THREE.PlaneGeometry(1750,14),nyRoadMat);road.rotation.x=-Math.PI/2;road.position.set(15,-14.47,z);scene.add(road);}
+ for(const [x,z,w,d] of [[-210,-3260,55,130],[-170,-3900,70,150],[190,-4150,65,130],[260,-3330,45,110],[-300,-4100,65,120]]){const park=new THREE.Mesh(new THREE.PlaneGeometry(w,d),nyParkMat);park.rotation.x=-Math.PI/2;park.position.set(x,-14.45,z);scene.add(park);}
+ const nyColors=[0xb7c5d0,0xc7c6bb,0x7f9caf,0xa9bbc5,0x8f9eaa,0xd1c8b8];
+ const nyGlass=new THREE.MeshStandardMaterial({color:0x39718e,roughness:.22,metalness:.28,emissive:0x17394a,emissiveIntensity:.55});
+ const nyWindowMat=new THREE.MeshBasicMaterial({color:0xffe8a3});
+ const nyBlueWindowMat=new THREE.MeshBasicMaterial({color:0x7fd8ff});
+ for(let ix=0;ix<9;ix++)for(let iz=0;iz<14;iz++){
+   const x=-680+ix*170+(iz%2?18:0)+(Math.random()-.5)*8,z=-2850-iz*190+(Math.random()-.5)*10;
+   if(Math.abs(x)<255&&iz>3&&iz<12)continue;
+   const w=28+Math.random()*14,d=30+Math.random()*18,h=45+Math.random()*175,baseY=-14.5;
+   building(x,baseY+h/2,z,w,h,d,nyColors[(ix*3+iz)%nyColors.length]);
+   // Bright facade bands make the New York blocks stand out clearly from the sky.
+   const facadeZ=z-d/2-.22,windowCount=Math.max(3,Math.floor(w/7));
+   for(let wi=0;wi<windowCount;wi++){
+     const wx=x-w/2+(wi+.5)*w/windowCount;
+     const strip=new THREE.Mesh(new THREE.BoxGeometry(Math.max(1.1,w/windowCount*.42),h*.78,.45),wi%3===0?nyBlueWindowMat:nyWindowMat);
+     strip.position.set(wx,baseY+h*.48,facadeZ);scene.add(strip);
+   }
+   for(let band=1;band<=Math.min(10,Math.floor(h/17));band++){
+     const line=new THREE.Mesh(new THREE.BoxGeometry(w*.88,.75,.5),band%3===0?nyBlueWindowMat:nyWindowMat);
+     line.position.set(x,baseY+band*h/(Math.min(10,Math.floor(h/17))+1),facadeZ-.03);scene.add(line);
+   }
+   if(Math.random()>.28){const crown=new THREE.Mesh(new THREE.BoxGeometry(w*.68,3,d*.68),nyGlass);crown.position.set(x,baseY+h+1.5,z);scene.add(crown);}
+   if(Math.random()>.55){const spire=new THREE.Mesh(new THREE.CylinderGeometry(.5,.9,10+Math.random()*24,6),nyGlass);spire.position.set(x,baseY+h+8,z);scene.add(spire);}
+ }
+ // A recognizable, taller landmark tower anchors the skyline above the surrounding blocks.
+ const nyLandmarkX=-8,nyLandmarkZ=-3650,nyLandmarkH=265;
+ const nyLandmark=building(nyLandmarkX,-14.5+nyLandmarkH/2,nyLandmarkZ,43,nyLandmarkH,48,0xb8c7d2);
+ const nyLandmarkGlass=new THREE.MeshBasicMaterial({color:0x75cfff});
+ for(let level=0;level<22;level++){
+   const y=-14.5+12+level*10.5;
+   for(const side of [-1,1]){const pane=new THREE.Mesh(new THREE.BoxGeometry(2.3,6,.65),level%4===0?nyWindowMat:nyLandmarkGlass);pane.position.set(nyLandmarkX+side*11,y,nyLandmarkZ-24.4);scene.add(pane);}
+ }
+ const nyTip=new THREE.Mesh(new THREE.CylinderGeometry(.15,2.3,35,7),nyGlass);nyTip.position.set(nyLandmarkX,-14.5+nyLandmarkH+17.5,nyLandmarkZ);scene.add(nyTip);
+ for(let ix=0;ix<5;ix++)for(let iz=0;iz<9;iz++){const x=360+ix*48,z=-3190-iz*105,w=27+Math.random()*16,d=35+Math.random()*20,h=18+Math.random()*55;building(x,-14.5+h/2,z,w,h,d,[0x9b9a91,0x8b969b,0xb5aa98,0x777f83][(ix+iz)%4]);}
+ // Brooklyn Bridge, stone towers and suspension cables.
+ const bridgeDeck=new THREE.Mesh(new THREE.BoxGeometry(410,3,30),new THREE.MeshStandardMaterial({color:0x7c7770,roughness:.9}));bridgeDeck.position.set(285,-7,-3610);scene.add(bridgeDeck);
+ const bridgeStone=new THREE.MeshStandardMaterial({color:0xb9ad98,roughness:1}),bridgeCable=new THREE.MeshStandardMaterial({color:0x454b50,metalness:.55,roughness:.5});
+ for(const x of [170,400])for(const z of [-3620,-3600]){const tower=new THREE.Mesh(new THREE.BoxGeometry(13,90,10),bridgeStone);tower.position.set(x,30,z);scene.add(tower);const arch=new THREE.Mesh(new THREE.BoxGeometry(15,17,12),bridgeStone);arch.position.set(x,13,z);scene.add(arch);}
+ function nyCable(points,r=.7){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],p[1],p[2])));scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve,36,r,5,false),bridgeCable));}
+ for(const z of [-3620,-3600]){nyCable([[70,30,z],[170,70,z],[285,76,z],[400,70,z],[500,30,z]],.75);nyCable([[70,10,z],[170,62,z],[285,66,z],[400,62,z],[500,10,z]],.5);}
+ for(let x=90;x<490;x+=18){const hanger=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,22,5),bridgeCable);hanger.position.set(x,7,-3610);scene.add(hanger);}
+ // Statue of Liberty: island, stone pedestal, green figure, crown and torch.
+ const statueBase=new THREE.Mesh(new THREE.CylinderGeometry(43,52,7,8),new THREE.MeshStandardMaterial({color:0x686e70,roughness:1}));statueBase.position.set(-950,-11,-3490);scene.add(statueBase);
+ const statuePed=new THREE.Mesh(new THREE.BoxGeometry(42,40,42),new THREE.MeshStandardMaterial({color:0x9c8b76,roughness:1}));statuePed.position.set(-950,9,-3490);scene.add(statuePed);
+ const patina=new THREE.MeshStandardMaterial({color:0x4b9b83,roughness:.72,metalness:.18}),patinaLight=new THREE.MeshStandardMaterial({color:0x69b49a,roughness:.7,metalness:.12});
+ const robe=new THREE.Mesh(new THREE.CylinderGeometry(7,13,31,9),patina);robe.position.set(-950,44,-3490);scene.add(robe);
+ const shoulders=new THREE.Mesh(new THREE.SphereGeometry(8,10,8),patina);shoulders.scale.set(1,.7,.8);shoulders.position.set(-950,59,-3490);scene.add(shoulders);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(4.6,10,8),patinaLight);head.position.set(-950,68,-3490);scene.add(head);
+ const crown=new THREE.Mesh(new THREE.ConeGeometry(6,8,7),patina);crown.position.set(-950,76,-3490);scene.add(crown);
+ const arm=new THREE.Mesh(new THREE.CylinderGeometry(2.3,3,22,7),patina);arm.position.set(-938,68,-3490);arm.rotation.z=-.48;scene.add(arm);
+ const torchArm=new THREE.Mesh(new THREE.CylinderGeometry(1.8,2.2,17,7),patina);torchArm.position.set(-931,77,-3490);torchArm.rotation.z=-.16;scene.add(torchArm);
+ const torch=new THREE.Mesh(new THREE.CylinderGeometry(2.6,1.8,5,8),patinaLight);torch.position.set(-930,86,-3490);scene.add(torch);
+ const flame=new THREE.Mesh(new THREE.SphereGeometry(3,8,7),new THREE.MeshStandardMaterial({color:0xffc75c,emissive:0xb96812,emissiveIntensity:.55}));flame.scale.set(.65,1.6,.65);flame.position.set(-930,91,-3490);scene.add(flame);
+ const book=new THREE.Mesh(new THREE.BoxGeometry(5,7,2),patinaLight);book.position.set(-659,48,-3655);scene.add(book);
+ for(const z of [-3070,-3330,-3890,-4240]){const dock=new THREE.Mesh(new THREE.BoxGeometry(120,2,18),new THREE.MeshStandardMaterial({color:0x8d887c,roughness:1}));dock.position.set(-320,-13.2,z);scene.add(dock);}
+ // AIRPORT BESIDE THE STATUE OF LIBERTY: runway, taxiway, terminal and apron.
+ const airportAsphalt=new THREE.MeshStandardMaterial({color:0x353b40,roughness:1}),airportConcrete=new THREE.MeshStandardMaterial({color:0x777c80,roughness:1}),airportWhite=new THREE.MeshStandardMaterial({color:0xf1f0dc,roughness:1}),airportYellow=new THREE.MeshStandardMaterial({color:0xf2c94c,roughness:1}),airportGlass=new THREE.MeshStandardMaterial({color:0x5e9da9,metalness:.15,roughness:.35}),airportRoof=new THREE.MeshStandardMaterial({color:0x9ba2a5,roughness:1});
+ const airportX=-850,airportZ=-3490;
+ const nyAirportRunway=new THREE.Mesh(new THREE.PlaneGeometry(76,690),airportAsphalt);nyAirportRunway.rotation.x=-Math.PI/2;nyAirportRunway.position.set(airportX,-14.35,airportZ);scene.add(nyAirportRunway);
+ const airportApron=new THREE.Mesh(new THREE.PlaneGeometry(190,145),airportConcrete);airportApron.rotation.x=-Math.PI/2;airportApron.position.set(airportX+120,-14.32,airportZ-205);scene.add(airportApron);
+ const airportTaxiway=new THREE.Mesh(new THREE.PlaneGeometry(32,260),airportAsphalt);airportTaxiway.rotation.x=-Math.PI/2;airportTaxiway.position.set(airportX+70,-14.33,airportZ-130);scene.add(airportTaxiway);
+ for(let z=airportZ-300;z<=airportZ+300;z+=38){const dash=new THREE.Mesh(new THREE.PlaneGeometry(2,18),airportWhite);dash.rotation.x=-Math.PI/2;dash.position.set(airportX,-14.25,z);scene.add(dash);}
+ for(const endZ of [airportZ-315,airportZ+315])for(let x=airportX-28;x<=airportX+28;x+=11){const bar=new THREE.Mesh(new THREE.PlaneGeometry(5,18),airportWhite);bar.rotation.x=-Math.PI/2;bar.position.set(x,-14.24,endZ);scene.add(bar);}
+ const airportRunwayEdgeMat=new THREE.MeshStandardMaterial({color:0xd6d8d2,roughness:1});
+ for(const x of [airportX-35,airportX+35]){const edge=new THREE.Mesh(new THREE.PlaneGeometry(1.4,680),airportRunwayEdgeMat);edge.rotation.x=-Math.PI/2;edge.position.set(x,-14.24,airportZ);scene.add(edge);}
+ const airportTerminal=new THREE.Mesh(new THREE.BoxGeometry(105,15,38),airportGlass);airportTerminal.position.set(airportX+150,-6.8,airportZ-235);scene.add(airportTerminal);
+ const airportTerminalRoof=new THREE.Mesh(new THREE.BoxGeometry(112,3,44),airportRoof);airportTerminalRoof.position.set(airportX+150,2.2,airportZ-235);scene.add(airportTerminalRoof);
+ for(let x=airportX+110;x<=airportX+190;x+=16){const gateMark=new THREE.Mesh(new THREE.BoxGeometry(1,1,14),airportYellow);gateMark.position.set(x,-13.8,airportZ-205);scene.add(gateMark);}
+ const airportTowerBase=new THREE.Mesh(new THREE.BoxGeometry(13,24,13),airportConcrete);airportTowerBase.position.set(airportX+225,-2,airportZ-245);scene.add(airportTowerBase);
+ const airportTowerCabin=new THREE.Mesh(new THREE.BoxGeometry(23,9,23),airportGlass);airportTowerCabin.position.set(airportX+225,14.5,airportZ-245);scene.add(airportTowerCabin);
+ const airportTowerRoof=new THREE.Mesh(new THREE.BoxGeometry(26,2,26),airportRoof);airportTowerRoof.position.set(airportX+225,20,airportZ-245);scene.add(airportTowerRoof);
+ for(const [x,z] of [[airportX+80,airportZ-285],[airportX+135,airportZ-300]]){const airportHangar=new THREE.Mesh(new THREE.BoxGeometry(38,18,30),airportConcrete);airportHangar.position.set(x,-5.3,z);scene.add(airportHangar);const airportHangarRoof=new THREE.Mesh(new THREE.ConeGeometry(25,9,4),airportRoof);airportHangarRoof.rotation.y=Math.PI/4;airportHangarRoof.scale.set(1,.45,.7);airportHangarRoof.position.set(x,8,z);scene.add(airportHangarRoof);}
+ for(const x of [airportX-42,airportX+42])for(let z=airportZ-320;z<=airportZ+320;z+=32){const airportLight=new THREE.Mesh(new THREE.SphereGeometry(1.15,6,5),new THREE.MeshBasicMaterial({color:0x62c7ff}));airportLight.position.set(x,-13.3,z);scene.add(airportLight);}
+ for(let n=1;n<=5;n++){const airportApproachLight=new THREE.Mesh(new THREE.SphereGeometry(1.7,6,5),new THREE.MeshBasicMaterial({color:n%2?0xff554f:0xffffff}));airportApproachLight.position.set(airportX,-13.1,airportZ-345-n*13);scene.add(airportApproachLight);}
+ addOvergrownCity(20,-3700,620,1120,95);
+  // Move the complete New York set roughly 10 km farther away and keep collision bounds in sync.
+ for(let i=nySceneStart;i<scene.children.length;i++)scene.children[i].position.z-=10000;
+ for(let i=nyBoundsStart;i<cityBuildingBounds.length;i++){cityBuildingBounds[i].z-=10000;}
+ // LOS ANGELES: coastal basin, palm-lined boulevards, Hollywood hills and a major international airport.
+ const laX=1500,laZ=-35500;
+ const laLand=new THREE.Mesh(new THREE.PlaneGeometry(3400,2700),new THREE.MeshStandardMaterial({color:0xc6b58b,roughness:1}));laLand.rotation.x=-Math.PI/2;laLand.position.set(laX,-14.6,laZ);scene.add(laLand);
+ const laOcean=new THREE.Mesh(new THREE.PlaneGeometry(1100,2700),new THREE.MeshStandardMaterial({color:0x2e8fbd,roughness:.55}));laOcean.rotation.x=-Math.PI/2;laOcean.position.set(laX-2150,-17.6,laZ);scene.add(laOcean);
+ const laBeach=new THREE.Mesh(new THREE.PlaneGeometry(150,2500),new THREE.MeshStandardMaterial({color:0xe5d19d,roughness:1}));laBeach.rotation.x=-Math.PI/2;laBeach.position.set(laX-1550,-14.45,laZ);scene.add(laBeach);
+ const laRoad=new THREE.MeshStandardMaterial({color:0x42474a,roughness:1}),laRoadLine=new THREE.MeshStandardMaterial({color:0xf2d36a,roughness:1}),laConcrete=new THREE.MeshStandardMaterial({color:0x999b98,roughness:1}),laGlass=new THREE.MeshStandardMaterial({color:0x5b8295,metalness:.25,roughness:.35});
+ // A broad Los Angeles street grid with long avenues and smaller blocks.
+ for(let x=laX-1250;x<=laX+1250;x+=125){const road=new THREE.Mesh(new THREE.PlaneGeometry(15,2350),laRoad);road.rotation.x=-Math.PI/2;road.position.set(x,-14.48,laZ);scene.add(road);const line=new THREE.Mesh(new THREE.PlaneGeometry(1,2350),laRoadLine);line.rotation.x=-Math.PI/2;line.position.set(x,-14.44,laZ);scene.add(line);}
+ for(let z=laZ-1050;z<=laZ+1050;z+=115){const road=new THREE.Mesh(new THREE.PlaneGeometry(2650,14),laRoad);road.rotation.x=-Math.PI/2;road.position.set(laX,-14.47,z);scene.add(road);}
+ const laBuildingColors=[0xb8aa91,0x8e9898,0x697d89,0xc9c0ad,0x7c8588,0xd0c4a8];
+ for(let ix=0;ix<18;ix++)for(let iz=0;iz<17;iz++){
+   const x=laX-1050+ix*125+(Math.random()-.5)*28,z=laZ-980+iz*120+(Math.random()-.5)*25;
+   const downtown=Math.abs(x-laX)<360&&Math.abs(z-laZ)<470;
+   const w=35+Math.random()*48,d=35+Math.random()*48,h=downtown?45+Math.random()*220:12+Math.random()*45;
+   const mat=Math.random()>.72?laGlass:new THREE.MeshStandardMaterial({color:laBuildingColors[(ix*7+iz*3)%laBuildingColors.length],roughness:.85});
+   const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);b.position.set(x,-14.5+h/2,z);scene.add(b);
+   if(downtown&&h>130){const crown=new THREE.Mesh(new THREE.BoxGeometry(w*.5,5,d*.5),laGlass);crown.position.set(x,-14.5+h+2.5,z);scene.add(crown);}
+ }
+ // Hollywood-style low hills and the iconic hillside sign.
+ for(let i=0;i<7;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,9,7),new THREE.MeshStandardMaterial({color:[0x827c58,0x938761,0x777c55][i%3],roughness:1}));hill.scale.set(170+Math.random()*110,65+Math.random()*55,100+Math.random()*65);hill.position.set(laX+400+i*105,8,laZ-1250-(i%3)*85);scene.add(hill);}
+ for(let i=0;i<9;i++){const letter=new THREE.Mesh(new THREE.BoxGeometry(17,27,4),new THREE.MeshStandardMaterial({color:0xf1eee3,roughness:1}));letter.position.set(laX+260+i*23,52,laZ-1260);scene.add(letter);}
+ // Palm trees along the beach boulevard.
+ const palmTrunk=new THREE.MeshStandardMaterial({color:0x806247,roughness:1}),palmLeaf=new THREE.MeshStandardMaterial({color:0x36734b,roughness:1});
+ for(let z=laZ-1100;z<=laZ+1100;z+=95)for(const x of [laX-1400,laX-1270]){const trunk=new THREE.Mesh(new THREE.CylinderGeometry(2,3,28,6),palmTrunk);trunk.position.set(x,0,z);scene.add(trunk);for(let a=0;a<6;a++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(3,23,5),palmLeaf);leaf.position.set(x+Math.cos(a*Math.PI/3)*8,15,z+Math.sin(a*Math.PI/3)*8);leaf.rotation.z=Math.cos(a*Math.PI/3)*.9;leaf.rotation.x=Math.sin(a*Math.PI/3)*.8;scene.add(leaf);}}
+ // Los Angeles International Airport-inspired complex to the south of the skyline.
+ const laxX=laX+700,laxZ=laZ+780,laxAsphalt=new THREE.MeshStandardMaterial({color:0x363c41,roughness:1}),laxWhite=new THREE.MeshStandardMaterial({color:0xf0f0e7,roughness:1}),laxYellow=new THREE.MeshStandardMaterial({color:0xf3c84b,roughness:1});
+ for(const [rx,rz,len,width] of [[laxX-260,laxZ,920,72],[laxX+260,laxZ,920,72],[laxX,laxZ+230,820,68]]){const runway=new THREE.Mesh(new THREE.PlaneGeometry(width,len),laxAsphalt);runway.rotation.x=-Math.PI/2;runway.position.set(rx,-14.36,rz);scene.add(runway);for(let z=rz-len/2+35;z<rz+len/2-20;z+=43){const dash=new THREE.Mesh(new THREE.PlaneGeometry(2,19),laxWhite);dash.rotation.x=-Math.PI/2;dash.position.set(rx,-14.25,z);scene.add(dash);}for(const x of [rx-width/2-4,rx+width/2+4])for(let z=rz-len/2;z<=rz+len/2;z+=48){const light=new THREE.Mesh(new THREE.SphereGeometry(1.1,5,4),new THREE.MeshBasicMaterial({color:0x69cfff}));light.position.set(x,-13.25,z);scene.add(light);}}
+ const laxApron=new THREE.Mesh(new THREE.PlaneGeometry(450,300),laConcrete);laxApron.rotation.x=-Math.PI/2;laxApron.position.set(laxX,-14.32,laxZ-360);scene.add(laxApron);
+ for(let i=0;i<5;i++){const terminal=new THREE.Mesh(new THREE.BoxGeometry(65,17,35),laGlass);terminal.position.set(laxX-170+i*85,-6,laxZ-440);scene.add(terminal);const roof=new THREE.Mesh(new THREE.BoxGeometry(70,3,39),laConcrete);roof.position.set(laxX-170+i*85,4,laxZ-440);scene.add(roof);}
+ const laxTower=new THREE.Mesh(new THREE.BoxGeometry(14,32,14),laConcrete);laxTower.position.set(laxX+275,1,laxZ-420);scene.add(laxTower);const laxCabin=new THREE.Mesh(new THREE.BoxGeometry(25,10,25),laGlass);laxCabin.position.set(laxX+275,22,laxZ-420);scene.add(laxCabin);
+ addOvergrownCity(laX,laZ-80,2100,1850,150);
+  // Move the whole Los Angeles region another 25 km beyond New York, keeping it on the extended ocean route.
+ for(let i=0;i<scene.children.length;i++){const o=scene.children[i];if(o.userData.losAngelesPart)o.position.z-=0;}
+
+ // SAN FRANCISCO: bayfront skyline, hills, Golden Gate Bridge and an international airport.
+ const sfX=-900,sfZ=-55000;
+ const sfWaterMat=new THREE.MeshStandardMaterial({color:0x347fa9,roughness:.5}),sfLandMat=new THREE.MeshStandardMaterial({color:0x56834a,roughness:1});
+ const sfBay=new THREE.Mesh(new THREE.PlaneGeometry(6200,3900),sfWaterMat);sfBay.rotation.x=-Math.PI/2;sfBay.position.set(sfX+1150,-17.9,sfZ+100);scene.add(sfBay);
+ const sfLand=new THREE.Mesh(new THREE.PlaneGeometry(2600,3200),sfLandMat);sfLand.rotation.x=-Math.PI/2;sfLand.position.set(sfX-1050,-14.65,sfZ+50);scene.add(sfLand);
+ const sfRoad=new THREE.MeshStandardMaterial({color:0x45494b,roughness:1}),sfConcrete=new THREE.MeshStandardMaterial({color:0xa9b0b2,roughness:.85}),sfGlass=new THREE.MeshStandardMaterial({color:0x668da2,metalness:.2,roughness:.35}),sfRed=new THREE.MeshStandardMaterial({color:0xc94b32,roughness:.7});
+ for(let x=sfX-2100;x<=sfX+250;x+=115){const o=new THREE.Mesh(new THREE.PlaneGeometry(10,2600),sfRoad);o.rotation.x=-Math.PI/2;o.position.set(x,-14.49,sfZ+70);scene.add(o);}
+ for(let z=sfZ-1200;z<=sfZ+1350;z+=115){const o=new THREE.Mesh(new THREE.PlaneGeometry(2300,10),sfRoad);o.rotation.x=-Math.PI/2;o.position.set(sfX-950,-14.48,z);scene.add(o);}
+ for(let ix=0;ix<18;ix++)for(let iz=0;iz<19;iz++){const x=sfX-2000+ix*112+(Math.random()-.5)*20,z=sfZ-1180+iz*112+(Math.random()-.5)*20,downtown=x>sfX-1250&&x<sfX-450&&z>sfZ-500&&z<sfZ+550,w=27+Math.random()*36,d=28+Math.random()*35,h=downtown?35+Math.random()*175:10+Math.random()*38,mat=Math.random()>.68?sfGlass:new THREE.MeshStandardMaterial({color:[0xc8bca7,0xa6a49a,0x8d9697,0xb9b4a7,0x737f86][(ix+iz)%5],roughness:.85}),b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);b.position.set(x,-14.5+h/2,z);scene.add(b);}
+ for(let i=0;i<12;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,9,7),new THREE.MeshStandardMaterial({color:[0x7f875b,0x9b946a,0x6d8058][i%3],roughness:1}));hill.scale.set(180+Math.random()*180,55+Math.random()*75,150+Math.random()*210);hill.position.set(sfX+250+(i%4)*185,8,sfZ-1150+Math.floor(i/4)*410);scene.add(hill);}
+
+ // MORE TRUE-TO-LIFE GOLDEN GATE LANDSCAPE:
+ // Marin Headlands north of the strait: layered coastal ridges, scrub and exposed rock.
+ const sfHeadlandMats=[0x7c805b,0x8e8b68,0x6c7757,0x999174].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,flatShading:true}));
+ for(let i=0;i<19;i++){const side=i%2?1:-1,hill=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),sfHeadlandMats[i%sfHeadlandMats.length]);hill.scale.set(210+Math.random()*210,65+Math.random()*95,190+Math.random()*260);hill.position.set(sfX+1900+(i%5)*145,3+Math.random()*14,sfZ+650+Math.floor(i/5)*230+(i%2)*70);scene.add(hill);}
+ // Rocky bluffs and Pacific-side cliffs west of the bridge approach.
+ const sfRockMat=new THREE.MeshStandardMaterial({color:0x77766a,roughness:1,flatShading:true}),sfScrubMat=new THREE.MeshStandardMaterial({color:0x65734e,roughness:1}),sfSandMat=new THREE.MeshStandardMaterial({color:0xd3c19a,roughness:1});
+ for(let i=0;i<15;i++){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(70+Math.random()*100,1),sfRockMat);rock.scale.set(1.4,.65,1.2);rock.position.set(sfX-1500-(i%4)*95,-2+Math.random()*12,sfZ+250+(i%8)*115);scene.add(rock);}
+ for(let i=0;i<11;i++){const bluff=new THREE.Mesh(new THREE.SphereGeometry(1,10,7),sfScrubMat);bluff.scale.set(140+Math.random()*130,45+Math.random()*65,170+Math.random()*160);bluff.position.set(sfX-1250+(i%4)*100,0,sfZ+450+Math.floor(i/4)*300);scene.add(bluff);}
+ // Baker Beach and the Crissy Field shoreline: sand, tidal flats and a green coastal strip.
+ const sfBeach=new THREE.Mesh(new THREE.PlaneGeometry(720,1750),sfSandMat);sfBeach.rotation.x=-Math.PI/2;sfBeach.position.set(sfX-1740,-14.35,sfZ+300);scene.add(sfBeach);
+ const sfCrissy=new THREE.Mesh(new THREE.PlaneGeometry(650,780),new THREE.MeshStandardMaterial({color:0x8d9b69,roughness:1}));sfCrissy.rotation.x=-Math.PI/2;sfCrissy.position.set(sfX-1240,-14.38,sfZ+1030);scene.add(sfCrissy);
+ // Cypress and coastal trees along the Presidio, plus low coastal scrub.
+ const sfTrunkMat=new THREE.MeshStandardMaterial({color:0x62513c,roughness:1}),sfTreeMat=new THREE.MeshStandardMaterial({color:0x294c37,roughness:1});
+ for(let i=0;i<34;i++){const tree=new THREE.Group(),trunk=new THREE.Mesh(new THREE.CylinderGeometry(2,3,20,6),sfTrunkMat);trunk.position.y=10;tree.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(9+Math.random()*5,38+Math.random()*18,7),sfTreeMat);crown.position.y=34;tree.add(crown);tree.position.set(sfX-1150+(i%8)*72,-14.2,sfZ+900+Math.floor(i/8)*65);scene.add(tree);}
+ // Alcatraz Island in the bay, with recognizable pale prison blocks and a lighthouse.
+ const sfIslandMat=new THREE.MeshStandardMaterial({color:0x858575,roughness:1}),sfIsland=new THREE.Mesh(new THREE.SphereGeometry(1,14,9),sfIslandMat);sfIsland.scale.set(145,24,250);sfIsland.position.set(sfX+1550,-8,sfZ+20);scene.add(sfIsland);
+ const sfPrison=new THREE.Mesh(new THREE.BoxGeometry(100,38,135),new THREE.MeshStandardMaterial({color:0xc4c2b4,roughness:.9}));sfPrison.position.set(sfX+1550,16,sfZ+20);scene.add(sfPrison);
+ for(let i=0;i<8;i++){const win=new THREE.Mesh(new THREE.BoxGeometry(2,3,4),new THREE.MeshStandardMaterial({color:0x44494b}));win.position.set(sfX+1497+i*15,18,sfZ-48);scene.add(win);}
+ const sfLightTower=new THREE.Mesh(new THREE.CylinderGeometry(5,7,26,8),sfConcrete);sfLightTower.position.set(sfX+1550,42,sfZ+205);scene.add(sfLightTower);
+ const sfLightTop=new THREE.Mesh(new THREE.CylinderGeometry(7,7,6,8),sfGlass);sfLightTop.position.set(sfX+1550,58,sfZ+205);scene.add(sfLightTop);
+ // Fort Point, the low brick fort beneath the southern bridge approach.
+ const sfFort=new THREE.Mesh(new THREE.BoxGeometry(95,22,80),new THREE.MeshStandardMaterial({color:0x9c7056,roughness:1}));sfFort.position.set(sfX-1000,-1,sfZ+800);scene.add(sfFort);
+ for(let i=0;i<7;i++){const embrasure=new THREE.Mesh(new THREE.BoxGeometry(5,4,3),new THREE.MeshStandardMaterial({color:0x403b36}));embrasure.position.set(sfX-1030+i*10,2,sfZ+758);scene.add(embrasure);}
+
+ // Golden Gate Bridge deck, two vermilion towers and suspension cables.
+ const sfBridgeZ=sfZ+950,sfBridgeY=23,sfBridgeDeck=new THREE.Mesh(new THREE.BoxGeometry(3600,5,22),new THREE.MeshStandardMaterial({color:0x8f4334,roughness:.6}));sfBridgeDeck.position.set(sfX+550,sfBridgeY,sfBridgeZ);scene.add(sfBridgeDeck);
+ const sfBridgeTowers=[sfX-800,sfX+900];
+ for(const tx of sfBridgeTowers){const tower=new THREE.Mesh(new THREE.BoxGeometry(18,125,22),sfRed);tower.position.set(tx,sfBridgeY+61,sfBridgeZ);scene.add(tower);for(const zo of [-13,13]){const cross=new THREE.Mesh(new THREE.BoxGeometry(32,8,5),sfRed);cross.position.set(tx,sfBridgeY+36,sfBridgeZ+zo);scene.add(cross);}}
+ function sfSuspensionCable(a,b,r=1.2,material=sfRed){const d=new THREE.Vector3().subVectors(b,a),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),6),material);o.position.copy(a).add(b).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());scene.add(o);}
+ sfSuspensionCable(new THREE.Vector3(sfX-1250,sfBridgeY+112,sfBridgeZ),new THREE.Vector3(sfBridgeTowers[0],sfBridgeY+124,sfBridgeZ));
+ sfSuspensionCable(new THREE.Vector3(sfBridgeTowers[0],sfBridgeY+124,sfBridgeZ),new THREE.Vector3(sfX+50,sfBridgeY+65,sfBridgeZ));
+ sfSuspensionCable(new THREE.Vector3(sfX+50,sfBridgeY+65,sfBridgeZ),new THREE.Vector3(sfBridgeTowers[1],sfBridgeY+124,sfBridgeZ));
+ sfSuspensionCable(new THREE.Vector3(sfBridgeTowers[1],sfBridgeY+124,sfBridgeZ),new THREE.Vector3(sfX+2200,sfBridgeY+112,sfBridgeZ));
+ for(let x=sfX-1200;x<=sfX+2150;x+=90){const tx=Math.abs(x-sfBridgeTowers[0])<Math.abs(x-sfBridgeTowers[1])?sfBridgeTowers[0]:sfBridgeTowers[1],cy=sfBridgeY+65+Math.min(1,Math.abs(x-tx)/1700)*59;sfSuspensionCable(new THREE.Vector3(x,sfBridgeY+3,sfBridgeZ),new THREE.Vector3(x,cy,sfBridgeZ),.45);}
+ // SFO-inspired runways, lights, terminals and tower.
+ const sfoX=sfX-1050,sfoZ=sfZ+1450,sfoAsphalt=new THREE.MeshStandardMaterial({color:0x343b41,roughness:1}),sfoWhite=new THREE.MeshStandardMaterial({color:0xf0f1e9,roughness:1});
+ for(const [rx,rz,len,width] of [[sfoX-250,sfoZ,1120,68],[sfoX+250,sfoZ,1120,68],[sfoX,sfoZ+230,850,62]]){const rw=new THREE.Mesh(new THREE.PlaneGeometry(width,len),sfoAsphalt);rw.rotation.x=-Math.PI/2;rw.position.set(rx,-14.36,rz);scene.add(rw);for(let z=rz-len/2+35;z<rz+len/2-20;z+=42){const d=new THREE.Mesh(new THREE.PlaneGeometry(2,18),sfoWhite);d.rotation.x=-Math.PI/2;d.position.set(rx,-14.24,z);scene.add(d);}for(const xx of [rx-width/2-4,rx+width/2+4])for(let z=rz-len/2;z<=rz+len/2;z+=52){const l=new THREE.Mesh(new THREE.SphereGeometry(1.05,5,4),new THREE.MeshBasicMaterial({color:0x72d5ff}));l.position.set(xx,-13.2,z);scene.add(l);}}
+ const sfoApron=new THREE.Mesh(new THREE.PlaneGeometry(430,260),sfConcrete);sfoApron.rotation.x=-Math.PI/2;sfoApron.position.set(sfoX,-14.3,sfoZ-340);scene.add(sfoApron);
+ for(let i=0;i<5;i++){const t=new THREE.Mesh(new THREE.BoxGeometry(62,17,36),sfGlass);t.position.set(sfoX-165+i*82,-6,sfoZ-405);scene.add(t);const roof=new THREE.Mesh(new THREE.BoxGeometry(68,3,40),sfConcrete);roof.position.set(sfoX-165+i*82,4,sfoZ-405);scene.add(roof);}
+ const sfoTower=new THREE.Mesh(new THREE.BoxGeometry(13,36,13),sfConcrete);sfoTower.position.set(sfoX+280,3,sfoZ-400);scene.add(sfoTower);const sfoCabin=new THREE.Mesh(new THREE.BoxGeometry(24,9,24),sfGlass);sfoCabin.position.set(sfoX+280,25,sfoZ-400);scene.add(sfoCabin);
+  // Abandoned SFO pickup scene: a survivor waits near the terminal, surrounded by zombies.
+  const survivorClothes=new THREE.MeshStandardMaterial({color:0x3f82c4,roughness:1}),survivorSkin=new THREE.MeshStandardMaterial({color:0xd2a17e,roughness:1}),zombieClothes=new THREE.MeshStandardMaterial({color:0x4b5b3d,roughness:1}),zombieSkin=new THREE.MeshStandardMaterial({color:0x84936b,roughness:1}),ragMat=new THREE.MeshStandardMaterial({color:0x343d32,roughness:1});
+  function makeAirportPerson(x,z,isFriend=false){
+    const group=new THREE.Group(),cloth=isFriend?survivorClothes:zombieClothes,skin=isFriend?survivorSkin:zombieSkin;
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(3.3,4.2,13,7),cloth);body.position.y=6.5;group.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(3.4,8,7),skin);head.position.y=16;group.add(head);
+    const armMat=isFriend?survivorClothes:ragMat;
+    for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.4,10,5),armMat);arm.position.set(side*4.3,7,0);arm.rotation.z=side*.22;group.add(arm);const leg=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.5,8,5),ragMat);leg.position.set(side*1.7,-3.5,0);group.add(leg);}
+    if(isFriend){const pack=new THREE.Mesh(new THREE.BoxGeometry(5,7,3),ragMat);pack.position.set(0,7,3.8);group.add(pack);}
+    group.position.set(x,-14.5,z);scene.add(group);return group;
+  }
+  const rescueFriend=makeAirportPerson(sfoX-65,sfoZ-330,true);
+  const zombieUnits=[];
+  for(const [dx,dz] of [[-28,-18],[24,-35],[52,8],[-55,26],[15,42],[75,-25],[-85,-5],[0,-58]]){const zed=makeAirportPerson(sfoX-65+dx,sfoZ-330+dz,false);zed.rotation.y=Math.random()*Math.PI*2;zombieUnits.push({group:zed,hp:3,alive:true});}
+  const friendBeacon=new THREE.Mesh(new THREE.TorusGeometry(8,1.3,8,22),new THREE.MeshBasicMaterial({color:0x48e6ff}));friendBeacon.rotation.x=Math.PI/2;friendBeacon.position.set(sfoX-65,-10,sfoZ-330);scene.add(friendBeacon);
+
+  addOvergrownCity(sfX-1050,sfZ+10,2050,2050,145);
+
+ // Mountain range with narrow flyable valleys between tall rock peaks.
+ const rockMats=[0x777b80,0x626b73,0x8b8e91,0x59636c].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,flatShading:true}));
+ const peaks=[[850,-470,115,220],[1030,-610,105,250],[1240,-480,120,270],[1450,-620,115,235],[1660,-470,125,285],[1850,-650,120,250],[900,-780,130,250],[1110,-900,120,290],[1320,-1040,130,310],[1540,-930,125,280],[1760,-1080,135,320],[1940,-900,120,260],[880,-1190,120,245],[1080,-1360,130,300],[1300,-1510,125,290],[1510,-1630,140,330],[1740,-1510,130,310],[1920,-1330,120,280],[1040,-1730,120,260],[1260,-1850,135,300],[1500,-1900,130,280],[1740,-1810,140,320]];
+ for(let i=0;i<peaks.length;i++){const [x,z,r,h]=peaks[i],rock=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,2),rockMats[i%rockMats.length]);rock.position.set(x,-15+h/2,z);rock.rotation.y=(i%3)*.37;scene.add(rock);mountainBounds.push({x,z,r,h});const snow=new THREE.Mesh(new THREE.ConeGeometry(r*.31,h*.22,7),new THREE.MeshStandardMaterial({color:0xe0e6e9,roughness:1,flatShading:true}));snow.position.set(x,-15+h*.84,z);snow.rotation.y=rock.rotation.y;scene.add(snow);}
+ for(let i=0;i<12;i++){let tree=new THREE.Group();let trunk=new THREE.Mesh(new THREE.CylinderGeometry(1,1.5,9,5),new THREE.MeshStandardMaterial({color:0x654b35}));trunk.position.y=-9;tree.add(trunk);let crown=new THREE.Mesh(new THREE.ConeGeometry(5,15,6),new THREE.MeshStandardMaterial({color:0x28633b}));crown.position.y=-1;tree.add(crown);tree.position.set((i%2?1:-1)*(100+Math.random()*140),-5,-500-i*65);scene.add(tree)}
+}catch(e){document.body.innerHTML='<div style="padding:24px;color:white">3D could not start. Open the game in an up-to-date browser that supports WebGL 2. Error: '+String(e)+'</div>';throw e}
+let gearParts=[];
+function makePlane(index){if(planeGroup)scene.remove(planeGroup);planeGroup=new THREE.Group();gearParts=[];const p=planes[index],scale=p.size;
+const bodyMat=new THREE.MeshStandardMaterial({color:p.color,metalness:.24,roughness:.42}),wingMat=new THREE.MeshStandardMaterial({color:p.color===0xffffff?0xe2e7ec:p.color,metalness:.18,roughness:.48}),dark=new THREE.MeshStandardMaterial({color:0x263a4c,metalness:.25,roughness:.25}),glass=new THREE.MeshStandardMaterial({color:0x143d59,metalness:.45,roughness:.18});
+function mesh(geo,mat,x,y,z,sx=1,sy=1,sz=1){let o=new THREE.Mesh(geo,mat);o.position.set(x,y,z);o.scale.set(sx,sy,sz);planeGroup.add(o);return o}
+function addLandingGear(x,z,isNose=false){const pivot=new THREE.Group();pivot.position.set(x,-.18*scale,z);planeGroup.add(pivot);const strut=new THREE.Mesh(new THREE.CylinderGeometry(.055*scale,.075*scale,.85*scale,8),dark);strut.position.y=-.42*scale;pivot.add(strut);const axle=new THREE.Mesh(new THREE.CylinderGeometry(.055*scale,.055*scale,.28*scale,8),dark);axle.rotation.z=Math.PI/2;axle.position.set(0,-.76*scale,0);pivot.add(axle);const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.23*scale,.23*scale,.16*scale,12),new THREE.MeshStandardMaterial({color:0x15191e,roughness:.95}));wheel.rotation.z=Math.PI/2;wheel.position.set(0,-.76*scale,0);pivot.add(wheel);gearParts.push({pivot,isNose,side:Math.sign(x)||1});}
+mesh(new THREE.CylinderGeometry(.55*scale,.9*scale,9*scale,12),bodyMat,0,0,0,1,1,1).rotation.x=Math.PI/2;
+mesh(new THREE.ConeGeometry(.55*scale,3*scale,12),bodyMat,0,0,-5.7*scale).rotation.x=-Math.PI/2;
+mesh(new THREE.ConeGeometry(.72*scale,2.4*scale,12),bodyMat,0,0,5.3*scale).rotation.x=Math.PI/2;
+mesh(new THREE.BoxGeometry(12*scale,.18*scale,2.3*scale),wingMat,0,-.12*scale,0);
+mesh(new THREE.BoxGeometry(3.2*scale,.14*scale,1.8*scale),wingMat,0,.4*scale,4.2*scale);
+mesh(new THREE.BoxGeometry(.2*scale,1.6*scale,2.1*scale),wingMat,0,.85*scale,4.5*scale);
+mesh(new THREE.BoxGeometry(2.5*scale,.12*scale,1.1*scale),dark,0,-.4*scale,-.8*scale);
+mesh(new THREE.SphereGeometry(.48*scale,12,8),glass,0,.34*scale,-2.2*scale,1,.55,1.3);
+// Visible engine nacelles beneath the wings, especially noticeable from the passenger window.
+if(index>=2&&index<=16){for(const side of [-1,1]){const engine=mesh(new THREE.CylinderGeometry(.34*scale,.42*scale,1.65*scale,14),dark,side*3.65*scale,-.48*scale,.35*scale);engine.rotation.x=Math.PI/2;const intake=mesh(new THREE.CircleGeometry(.29*scale,14),new THREE.MeshStandardMaterial({color:0x080f17,metalness:.25,roughness:.6,side:THREE.DoubleSide}),side*3.65*scale,-.48*scale,-.49*scale);intake.rotation.x=-Math.PI/2;}}
+// Three visible landing-gear assemblies with hinged legs and rotating deployment motion.
+addLandingGear(-2.65*scale,.65*scale,false);addLandingGear(2.65*scale,.65*scale,false);addLandingGear(0,-3.1*scale,true);
+if(index!==0&&index!==1&&index!==2&&index!==3&&index!==4&&index!==17&&index!==18){for(let side of [-1,1]){for(let j=0;j<Math.min(12,Math.round(4*scale));j++){let win=mesh(new THREE.BoxGeometry(.08*scale,.17*scale,.22*scale),glass,side*.53*scale,.13*scale,(-1.1+j*.48)*scale);win.rotation.y=side*.1}}}
+if(index===19){mesh(new THREE.ConeGeometry(.35*scale,5*scale,8),bodyMat,0,0,-1.5*scale).rotation.x=-Math.PI/2;for(let side of [-1,1])mesh(new THREE.BoxGeometry(1.4*scale,.12*scale,2.5*scale),wingMat,side*2.4*scale,0,0)}
+planeGroup.position.set(0,-13.3,0);scene.add(planeGroup);updateGearVisual(gear?1:0)}
+function updateGearVisual(progress){for(const part of gearParts){const target=part.isNose?-.9:part.side*.95;part.pivot.rotation.z=target*progress;part.pivot.position.y=(-.18+(progress*.34))*planes[current].size;part.pivot.visible=true;}}
+let gearProgress=gear?1:0,gearTarget=gear?1:0;
+makePlane(current);
+let crashActive=false,crashStartTime=0,crashEffect=null,lastCrashAt=-10;
+function clearCrashEffect(){if(crashEffect){scene.remove(crashEffect);crashEffect.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});crashEffect=null;}crashActive=false;}
+function startCrashAnimation(kmh){if(crashActive||flightTime-lastCrashAt<4)return;crashActive=true;crashStartTime=flightTime;lastCrashAt=flightTime;paused=true;autoLandingEnabled=false;autopilotEnabled=false;planeGroup.rotation.x=-.32;planeGroup.rotation.z=.22;planeGroup.position.y=-13.3;crashEffect=new THREE.Group();crashEffect.position.copy(planeGroup.position);const flash=new THREE.Mesh(new THREE.SphereGeometry(planes[current].size*2.8,12,10),new THREE.MeshBasicMaterial({color:0xff8a22,transparent:true,opacity:.95}));flash.position.y=2;crashEffect.add(flash);for(let i=0;i<16;i++){const spark=new THREE.Mesh(new THREE.SphereGeometry(.6+Math.random()*1.2,6,5),new THREE.MeshBasicMaterial({color:i%3===0?0xffdf65:0xff4b16,transparent:true,opacity:.9}));spark.position.set((Math.random()-.5)*16,Math.random()*10,(Math.random()-.5)*14);spark.userData.vx=(Math.random()-.5)*18;spark.userData.vy=8+Math.random()*22;spark.userData.vz=(Math.random()-.5)*18;crashEffect.add(spark);}for(let i=0;i<9;i++){const smoke=new THREE.Mesh(new THREE.SphereGeometry(2+Math.random()*2.5,7,6),new THREE.MeshBasicMaterial({color:0x555b60,transparent:true,opacity:.55}));smoke.position.set((Math.random()-.5)*8,5+i*2,(Math.random()-.5)*7);smoke.userData.smoke=true;crashEffect.add(smoke);}scene.add(crashEffect);$('status').textContent='CRASH! ZU SCHNELL GELANDET · '+Math.round(kmh)+' KM/H';if(activeMission>=0)failMission('You were going too fast when landing.');}
+function resetFlight(){clearCrashEffect();speed=0;altitude=0;heading=0;steerX=0;steerY=0;rollAngle=0;pitchAngle=0;yawRate=0;flightTime=0;braking=false;$('brakeBtn').style.background='';planeGroup.position.set(0,-13.3,0);planeGroup.rotation.set(0,0,0);$('status').textContent='READY TO FLY';}
+let onFoot=false,footGroup=null,footYaw=0,footCameraYaw=0,footCameraPitch=-.12,lastShotAt=0;
+function setOnFootMode(enabled){
+ onFoot=enabled;document.body.classList.toggle('footMode',enabled);
+ const rescueMissionActive=activeMission>=0&&missions[activeMission].type==='zombieRescue';
+ $('footControls').style.display=(enabled||rescueMissionActive)?'flex':'none';
+ $('exitPlaneBtn').style.display=enabled?'none':(rescueMissionActive?'':'none');
+ $('shootBtn').style.display=enabled?'':'none';
+ $('enterPlaneBtn').style.display=enabled?'':'none';
+ if(enabled){
+  speed=0;throttle=0;$('throttle').value=0;$('throttleVal').textContent='0%';
+  flightRouteTarget=null;autopilotEnabled=false;autoLandingEnabled=false;
+  planeGroup.visible=false;
+  // Keep the camera update inside the animation loop; it switches to the
+  // on-foot follow camera on the next frame, independently of the aircraft.
+  footCameraYaw=footYaw;footCameraPitch=-.12;
+  $('status').textContent='ZU FUSS UNTERWEGS · FINDE DIE ZOMBIES';stick.querySelector('.controlLabel').textContent='LAUFEN';
+ }else{
+  planeGroup.visible=true;
+  if(footGroup){planeGroup.position.set(footGroup.position.x,-13.3,footGroup.position.z);planeGroup.rotation.set(0,0,0);heading=0;}
+  steerX=0;steerY=0;knob.style.transform='translate(0,0)';stick.querySelector('.controlLabel').textContent='FLIGHT CONTROLS';$('status').textContent='IN AIRCRAFT · READY';
+ }
+}
+function tryExitPlane(){
+ const m=activeMission>=0?missions[activeMission]:null;
+ const nearSfo=Math.hypot(planeGroup.position.x+1950,planeGroup.position.z+53550)<900;
+ if(!m||m.type!=='zombieRescue'||missionPhase!=='outbound'){alert('You can only exit the aircraft at San Francisco Airport during this mission.');return;}
+ if(altitude>3||speed*3.6>8||!nearSfo){alert('Land at San Francisco Airport and bring the aircraft to a stop before exiting.');return;}
+ if(!footGroup){footGroup=new THREE.Group();const body=new THREE.Mesh(new THREE.CylinderGeometry(2.5,3,10,7),new THREE.MeshStandardMaterial({color:0x244f9a,roughness:1}));body.position.y=5;footGroup.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(2.4,8,7),new THREE.MeshStandardMaterial({color:0xd2a17e,roughness:1}));head.position.y=12;footGroup.add(head);scene.add(footGroup);}
+ footGroup.position.set(planeGroup.position.x,-14.5,planeGroup.position.z);footYaw=heading;footCameraYaw=heading;footGroup.rotation.y=footYaw;setOnFootMode(true);
+}
+function fireAtZombie(){
+ if(!onFoot||activeMission<0||missions[activeMission].type!=='zombieRescue'||missionPhase!=='outbound')return;
+ const now=Date.now();if(now-lastShotAt<350)return;lastShotAt=now;
+ let best=null,bestD=170;
+ for(const z of zombieUnits){if(!z.alive)continue;const dx=z.group.position.x-footGroup.position.x,dz=z.group.position.z-footGroup.position.z,d=Math.hypot(dx,dz),angle=Math.atan2(-dx,-dz),diff=Math.atan2(Math.sin(angle-footYaw),Math.cos(angle-footYaw));if(d<bestD&&Math.abs(diff)<.8){best=z;bestD=d;}}
+ if(!best){$('status').textContent='NO ZOMBIE IN SIGHT · MOVE CLOSER AND AIM';return;}
+ best.hp--;if(best.hp<=0){best.alive=false;best.group.visible=false;$('status').textContent='ZOMBIE ELIMINATED · REMAINING: '+zombieUnits.filter(z=>z.alive).length;}else $('status').textContent='TREFFER! NOCH '+best.hp+' HITS REQUIRED';
+}
+$('exitPlaneBtn').onclick=tryExitPlane;$('shootBtn').onclick=fireAtZombie;
+$('enterPlaneBtn').onclick=()=>{if(!onFoot||!footGroup)return;if(Math.hypot(footGroup.position.x-planeGroup.position.x,footGroup.position.z-planeGroup.position.z)>45){alert('Return to your aircraft first.');return;}setOnFootMode(false);};
+
+function render(t){
+ requestAnimationFrame(render);
+ const dt=Math.min(clock.getDelta(),.05);
+ if(onFoot&&footGroup&&!paused){
+  const forward=-steerY,side=steerX,mag=Math.hypot(forward,side);
+  if(mag>.08){const moveSpeed=105*dt;footGroup.position.x+=Math.sin(footYaw)*forward*moveSpeed+Math.cos(footYaw)*side*moveSpeed;footGroup.position.z+=-Math.cos(footYaw)*forward*moveSpeed+Math.sin(footYaw)*side*moveSpeed;footGroup.rotation.y=footYaw;}
+  $('enterPlaneBtn').style.display=Math.hypot(footGroup.position.x-planeGroup.position.x,footGroup.position.z-planeGroup.position.z)<45?'':'none';
+  if(activeMission>=0&&missions[activeMission].type==='zombieRescue'&&missionPhase==='outbound'){
+   const alive=zombieUnits.filter(z=>z.alive).length;
+   if(alive===0&&Math.hypot(footGroup.position.x-rescueFriend.position.x,footGroup.position.z-rescueFriend.position.z)<38){missionPhase='return';setOnFootMode(false);makeAirportReturnMarker();$('status').textContent='FRIEND RESCUED · RETURN TO HOME AIRPORT';alert('All zombies defeated and your friend rescued! Board the aircraft and fly back to your home airport.');}
+   else if(alive===0)$('status').textContent='ALL ZOMBIES DEFEATED · GO TO YOUR FRIEND';
+  }
+ }
+ if(!paused&&!onFoot){
+  const spec=planes[current];
+  // Smoothly swing the landing gear into or out of the fuselage.
+  gearTarget=gear?1:0;gearProgress+=(gearTarget-gearProgress)*Math.min(1,dt*2.8);
+  if(Math.abs(gearTarget-gearProgress)<.008)gearProgress=gearTarget;
+  updateGearVisual(gearProgress);
+  if(activeMission===3&&!engineFailed&&flightTime-missionStartedAt>12){engineFailed=true;$('status').textContent='⚠ TRIEBWERKSAUSFALL! NOTLANDUNG';}
+  // Eine nach unten gerichtete Flugzeugnase erhöht die Geschwindigkeit leicht,
+  // ähnlich wie beim Beschleunigen im Sinkflug. Bei Triebwerksausfall bleibt der Effekt aus.
+  // Gleitflug for jedes Flugzeug: Nase nach unten wandelt Sinkhöhe in Vorwärtsgeschwindigkeit um.
+  // Der Effekt gilt auch bei laufendem Triebwerk und wird bei stärkerem Sturzflug deutlicher.
+  const noseDownAmount=Math.max(0,Math.min(1,(-pitchAngle-.035)/.30));
+  const noseDownBoost=noseDownAmount*(spec.speed*.42/3.6);
+  if(autoLandingEnabled&&!engineFailed){const landingThrottle=Math.max(20,Math.min(65,landingSpeedLimit()/spec.speed*115));throttle+=(landingThrottle-throttle)*Math.min(1,dt*.35);$('throttle').value=Math.round(throttle);$('throttleVal').textContent=Math.round(throttle)+'%';}
+  if(engineFailed){
+   // Ohne Triebwerk bleibt die Geschwindigkeit im Gleitflug erhalten und wächst beim Absenken der Nase.
+   speed=Math.max(0,Math.min(spec.speed/3.6*1.6,speed+noseDownAmount*dt*13-dt*(noseDownAmount>.12?.06:.7)));
+  }else{
+   const targetSpeed=throttle/100*spec.speed/3.6+noseDownBoost;
+   speed+=(targetSpeed-speed)*dt*.22;
+   // Zusätzliche, direkte Beschleunigung im Sinkflug for alle Flugzeuge.
+   if(noseDownAmount>0)speed=Math.min(spec.speed/3.6*1.45,speed+noseDownAmount*dt*4.5);
+  }
+  if(braking)speed=Math.max(0,speed-dt*11);
+  const stallSpeed=Math.max(24,spec.speed/3.6*.13);
+  stalling=altitude>4&&speed<stallSpeed;
+  if(stalling){pitchAngle+=( -.42-pitchAngle)*Math.min(1,dt*1.8);rollAngle+=Math.sin(flightTime*18)*dt*.09;speed=Math.max(0,speed-dt*1.8);$('status').textContent='⚠ STALL · NOSE DROPPING';$('status').style.color='#ff9d72';}
+  else $('status').style.color='';
+  // Umgekehrte Links-rechts-Steuerung: Joystick nach rechts lässt das Flugzeug nach links fliegen.
+  const landingHeading=planeGroup.position.z < -800 ? Math.PI : (planeGroup.position.z > 420 ? Math.atan2(planeGroup.position.x,planeGroup.position.z-420) : Math.max(-.5,Math.min(.5,planeGroup.position.x*.004)));
+  const selectedHeading=flightRouteTarget?Math.atan2(-(flightRouteTarget.x-planeGroup.position.x),-(flightRouteTarget.z-planeGroup.position.z)):(autoLandingEnabled?landingHeading:autopilotHeading);
+  const headingError=Math.atan2(Math.sin(selectedHeading-heading),Math.cos(selectedHeading-heading));
+  const inputX=(flightRouteTarget||autoLandingEnabled||autopilotEnabled)?Math.max(-.55,Math.min(.55,headingError*(flightRouteTarget?2.0:1.15))):-(gyroEnabled?-gyroX:steerX);
+  const inputY=(autoLandingEnabled||autopilotEnabled)?0:-(gyroEnabled?-gyroY:steerY);
+  // Mission 24: stronger, continuously changing storm turbulence that shakes and pitches the aircraft.
+  const stormTurbulence=activeMission>=0&&missions[activeMission].type==='stormFlight';
+  const gustRoll=stormTurbulence?(Math.sin(flightTime*7.1)*.24+Math.sin(flightTime*13.7)*.13+Math.sin(flightTime*3.2)*.08):0;
+  const gustPitch=stormTurbulence?(Math.sin(flightTime*5.9)*.12+Math.sin(flightTime*11.3)*.07):0;
+  const targetRoll=inputX*.72+gustRoll;
+  // Umgekehrte Hoch-runter-Steuerung: Joystick nach unten senkt die Nase,
+  // Joystick nach oben hebt die Nase.
+  const altitudeError=autopilotAltitude-altitude;
+  const autopilotPitch=Math.max(-.22,Math.min(.22,altitudeError*.004));
+  const landingPitch=Math.max(-.055,Math.min(.035,(Math.max(0,altitude)-8)*-.00022));
+  const targetPitch=(stalling?-.42:(autoLandingEnabled?landingPitch:(autopilotEnabled?autopilotPitch:-inputY*.48)))+gustPitch;
+  rollAngle+=(targetRoll-rollAngle)*Math.min(1,dt*2.2);
+  pitchAngle+=(targetPitch-pitchAngle)*Math.min(1,dt*1.7);
+  // Coordinate heading with banking so a sustained right bank produces a right turn.
+  const desiredYawRate=inputX*.34*Math.max(.25,speed/45)+(stormTurbulence?(Math.sin(flightTime*8.3)*.11+Math.sin(flightTime*4.4)*.07):0);
+  yawRate+=(desiredYawRate-yawRate)*Math.min(1,dt*1.1);
+  heading+=yawRate*dt;
+  planeGroup.rotation.order='YXZ';
+  planeGroup.rotation.y=heading;
+  planeGroup.rotation.z=rollAngle;
+  planeGroup.rotation.x=pitchAngle;
+  // Die Flugbahn folgt der tatsächlichen Flugzeugnase statt nur dem Kamera-/Heading-Winkel.
+  // Dadurch beeinflussen Nicken und Rollen die Bewegungsrichtung direkt.
+  const forward=new THREE.Vector3(0,0,-1).applyQuaternion(planeGroup.quaternion).normalize();
+  if(flightRouteTarget){const routeDistance=Math.hypot(flightRouteTarget.x-planeGroup.position.x,flightRouteTarget.z-planeGroup.position.z);if(routeDistance<260){flightRouteTarget=null;autopilotEnabled=false;$('autopilotBtn').textContent='AUTOPILOT: OFF';$('status').textContent='ANGEKOMMEN: '+flightRouteName.toUpperCase()+' · MANUAL CONTROL';flightRouteName='';}else $('status').textContent='FLIGHT TO '+flightRouteName.toUpperCase()+' · '+(routeDistance/1000).toFixed(1)+' km RESTSTRECKE';}
+  planeGroup.position.x+=forward.x*speed*dt;
+  planeGroup.position.z+=forward.z*speed*dt;
+  // Unsichtbare, durchgehende Sperrwände halten freie Flüge von gesperrten Szenerien fern.
+  // Missionen dürfen ihre vorgesehenen Ziele erreichen; New York wird durch Mission 22 freigeschaltet.
+  if(activeMission<0){const barriers=[{city:'New York',z:-11200},{city:'Los Angeles',z:-31000},{city:'San Francisco',z:-49000}];for(const wall of barriers){if(!sceneryUnlocked(wall.city)&&planeGroup.position.z<wall.z){planeGroup.position.z=wall.z;if(flightRouteTarget){flightRouteTarget=null;flightRouteName='';autopilotEnabled=false;$('autopilotBtn').textContent='AUTOPILOT: OFF';} $('status').textContent='UNSICHTBARE SPERRWAND · '+wall.city.toUpperCase()+' IST NOCH GESPERRT';break;}}}
+  const altitudeBeforeUpdate=altitude;
+  if(speed>18) altitude+=forward.y*speed*dt*4.5;
+  else altitude-=dt*2.2;
+  
+  altitude=Math.max(0,Math.min(1800,altitude));
+  if(stalling)altitude-=dt*(5+Math.max(0,stallSpeed-speed)*.22);
+  altitude=Math.max(0,Math.min(1800,altitude));
+  planeGroup.position.y=-13.3+altitude*.22+(altitude>0.5?Math.sin(flightTime*1.2)*.08+(stalling?Math.sin(flightTime*24)*.08:0):0);
+  flightTime+=dt;
+  const runwayContact=Math.abs(planeGroup.position.x)<22&&planeGroup.position.z>-820&&planeGroup.position.z<440&&altitude<5&&Math.abs(pitchAngle)<.55;
+  const hardGroundImpact=altitudeBeforeUpdate>2&&altitude<=2&&speed*3.6>Math.max(110,landingSpeedLimit()*1.22);
+  if(hardGroundImpact||(runwayContact&&speed*3.6>Math.max(110,landingSpeedLimit()*1.22)))startCrashAnimation(speed*3.6);
+  if(!stalling&&!crashActive){$('status').textContent=speed<5?'READY TO FLY':altitude>40?'IN FLIGHT · FOLLOW CAMERA':speed<40?'ROLLEN / STARTLAUF':'TAKE OFF · CLIMB';}
+  if(engineOsc&&engineGain){engineOsc.frequency.setTargetAtTime(engineFailed?22:42+speed*2.1+throttle*.9,audioCtx.currentTime,.12);engineGain.gain.setTargetAtTime(engineFailed?.002:.018+throttle*.00055,audioCtx.currentTime,.15);}
+  if(activeMission>=0){const m=missions[activeMission],kmh=speed*3.6,level=Math.abs(rollAngle)<.22;const onRunway=Math.abs(planeGroup.position.x)<14&&planeGroup.position.z>-800&&planeGroup.position.z<420;const nearRunway=onRunway&&altitude<35&&kmh<landingSpeedLimit()&&level&&!gear;const airportStopRequired=[5,6,7,8,9,10,14].includes(activeMission);const finishAtAirport=()=>{if(airportStopRequired&&kmh>=5){$('status').textContent='LAND SAFELY · BRAKE TO A COMPLETE STOP AT THE AIRPORT';}else finishMission(activeMission);};const elapsed=flightTime-missionStartedAt;if(m.timeLimit&&elapsed>m.timeLimit){failMission('Time limit exceeded.');}else if(airportStopRequired&&missionPhase==='return'&&nearRunway){finishAtAirport();}else if(m.type==='nyEngineEmergency'&&!engineFailed&&Math.abs(planeGroup.position.z)>=6500){engineFailed=true;throttle=0;$('throttle').value=0;$('throttleVal').textContent='0%';$('status').textContent='TRIEBWERKSAUSFALL ÜBER DEM ATLANTIK · GLEITFLUG NACH NEW YORK';alert('Triebwerksausfall! Du bist mitten über dem Atlantik. Halte die Nase leicht nach unten, nutze den Gleitflug und erreiche den Flughafen von New York. Berührst du vorher den Boden, ist die Mission verloren.');}else if(m.type==='nyEngineEmergency'&&altitude<3){const distNY=Math.hypot(planeGroup.position.x-m.target[0],planeGroup.position.z-m.target[2]);if(distNY<280&&kmh<Math.max(100,landingSpeedLimit())&&!gear){finishMission(activeMission);}else{failMission('You touched the ground before landing safely. New York Airport was not reached safely.');}}else if((m.type==='mountainRoute'||m.type==='nightMountainRoute')&&mountainBounds.some(b=>{const dx=planeGroup.position.x-b.x,dz=planeGroup.position.z-b.z,d=Math.hypot(dx,dz);const terrainHeight=-15+b.h*Math.max(0,1-d/b.r);return d<b.r&&planeGroup.position.y<terrainHeight-2;})){failMission('You crashed into a mountain. Watch your altitude and stay in the middle of the valley.');}else if((m.type==='city'||m.type==='nightCity'||m.type==='newYorkSkyline')&&cityBuildingBounds.some(b=>Math.abs(planeGroup.position.x-b.x)<b.w/2+planes[current].size*2&&Math.abs(planeGroup.position.z-b.z)<b.d/2+planes[current].size*2&&5+altitude*.22>b.y-b.h/2-planes[current].size&&5+altitude*.22<b.y+b.h/2+planes[current].size)){failMission('You collided with a building.');}else if(m.type==='takeoff'&&kmh>=120&&altitude>=80&&planeGroup.position.z>-850&&planeGroup.position.z<450&&gear){finishMission(activeMission);}else if(m.type==='landing'&&onRunway&&altitude<5&&kmh<5&&level&&!gear){finishMission(activeMission);}else if(m.type==='landing'&&nearRunway&&kmh>=5){$('status').textContent='LANDED? BRAKE TO A STOP · GEAR EXTENDED';}else if(m.type==='bellyLanding'&&onRunway&&altitude<35&&kmh<landingSpeedLimit()&&level&&gear){finishMission(activeMission);}else if(m.type==='transport'&&m.target){const distance=Math.hypot(planeGroup.position.x-m.target[0],planeGroup.position.z-m.target[2]);const safeHeight=altitude>35&&altitude<260;const controlledSpeed=kmh<Math.max(160,planes[current].speed*.72);if(distance<65&&safeHeight&&controlledSpeed&&level)finishMission(activeMission);}else if(m.type==='engine'&&engineFailed&&nearRunway){finishMission(activeMission);}else if(m.type==='cargo'||m.type==='nightCargo'){const target=missionPhase==='outbound'?m.target:[0,0,-180],distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(distance<55&&altitude>20&&altitude<220&&level&&kmh<Math.max(190,planes[current].speed*.75)){if(missionPhase==='outbound'){missionPhase='return';makeAirportReturnMarker();$('status').textContent='CARGO COLLECTED · RETURN TO HOME AIRPORT';}else if(nearRunway){finishAtAirport();}else $('status').textContent='RETURN TO AIRPORT · LAND ON THE RUNWAY';}}else if(m.type==='night'){const target=missionPhase==='outbound'?m.target:[0,0,-180],distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(distance<65&&altitude>35&&altitude<300&&level){if(missionPhase==='outbound'){missionPhase='return';makeAirportReturnMarker();$('status').textContent='DESTINATION REACHED · FLY BACK';}else if(nearRunway)finishAtAirport();}else if(missionMarker){missionMarker.rotation.y+=dt*.8;$('status').textContent='MISSION: '+m.name+' · ZIEL '+Math.round(distance)+' m';}}else if(m.type==='newYorkPickup'){const target=missionPhase==='return'?[0,0,-180]:m.target,distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(missionPhase==='outbound'&&distance<75&&altitude<35&&kmh<landingSpeedLimit()&&level){missionPhase='return';makeAirportReturnMarker();$('status').textContent='FREUND IN NEW YORK ABGEHOLT · ZURÜCK ZUM AUSGANGSFLUGHAFEN';alert('Dein Freund ist an Bord! Kehre innerhalb des Zeitlimits zum Ausgangsflughafen zurück und lande sicher.');}else if(missionPhase==='return'&&nearRunway){finishAtAirport();}else if(missionMarker){missionMarker.rotation.y+=dt*.8;$('status').textContent=missionPhase==='outbound'?'FLY TO NEW YORK · TARGET '+Math.round(distance)+' m':'FRIEND ON BOARD · RETURN TO DEPARTURE AIRPORT · '+Math.round(distance)+' m';}}else if(m.type==='zombieRescue'){const target=missionPhase==='return'?[0,0,-180]:m.target,distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(missionPhase==='outbound'&&!onFoot&&distance<900&&altitude<3&&kmh<8){$('status').textContent='LANDE IN SAN FRANCISCO · HALTE AN UND STEIGE AUS';}else if(missionPhase==='return'&&!onFoot&&nearRunway){finishMission(activeMission);}else if(missionMarker&&!onFoot){missionMarker.rotation.y+=dt*.8;$('status').textContent=missionPhase==='outbound'?'LANDE IN SAN FRANCISCO · STEIGE AUS UND BESIEGE DIE ZOMBIES · ZIEL '+Math.round(distance)+' m':'RETURN TO HOME AIRPORT · LAND SAFELY · '+Math.round(distance)+' m';}}else if(m.type==='city'||m.type==='nightCity'||m.type==='newYorkSkyline'||m.type==='jungleRoute'||m.type==='nightJungleRoute'||m.type==='mountainRoute'||m.type==='nightMountainRoute'){const target=missionPhase==='return'?[0,0,-180]:m.checkpoints[missionCheckpoint],distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(missionPhase!=='return'&&distance<(m.type==='mountainRoute'||m.type==='nightMountainRoute'?180:55)&&((m.type==='mountainRoute'||m.type==='nightMountainRoute')||(altitude>10&&altitude<300))){missionCheckpoint++;if(missionCheckpoint>=m.checkpoints.length){missionPhase='return';makeAirportReturnMarker();$('status').textContent=(m.type.includes('mountain')?'GEBIRGSROUTE GESCHAFFT · RETURN TO AIRPORT':m.type.includes('jungle')?'DSCHUNGELROUTE GESCHAFFT · RETURN TO AIRPORT':m.type==='newYorkSkyline'?'NEW-YORK-SKYLINE GESCHAFFT · RETURN TO AIRPORT':'STADTROUTE GESCHAFFT · RETURN TO AIRPORT');}else makeMissionMarker(m.checkpoints[missionCheckpoint]);}if(missionPhase==='return'&&nearRunway)finishAtAirport();else if(missionMarker){missionMarker.rotation.y+=dt*.8;$('status').textContent=missionPhase==='return'?'RETURN TO AIRPORT · ZIEL '+Math.round(Math.hypot(planeGroup.position.x,planeGroup.position.z+180))+' m':(m.type.includes('mountain')?'GEBIRGSPASS ':m.type.includes('jungle')?'JUNGLE ROUTE ':m.type==='newYorkSkyline'?'NEW-YORK-SKYLINE ':'STADTKORRIDOR ')+(missionCheckpoint+1)+'/'+m.checkpoints.length+' · ZIEL '+Math.round(distance)+' m';}}else if(m.type==='stormFlight'){const target=missionPhase==='return'?[0,0,-180]:m.target,distance=Math.hypot(planeGroup.position.x-target[0],planeGroup.position.z-target[2]);if(missionPhase==='outbound'&&distance<90&&altitude>35&&altitude<280){missionPhase='return';makeAirportReturnMarker();$('status').textContent='GEWITTERZONE DURCHQUERT · HALTE DAS FLUGZEUG STABIL UND KEHRE ZURÜCK';}else if(missionPhase==='return'&&nearRunway){finishMission(activeMission);}else if(missionMarker){missionMarker.rotation.y+=dt*.8;$('status').textContent=missionPhase==='outbound'?'SCHWERES GEWITTER · ZIEL '+Math.round(distance)+' m · KEEP THE AIRCRAFT STABLE':'THUNDERSTORM SURVIVED · RETURN TO AIRPORT · '+Math.round(distance)+' m';}}else if(m.type==='nyEngineEmergency'){if(missionMarker)missionMarker.rotation.y+=dt*.8;const distNY=Math.hypot(planeGroup.position.x-m.target[0],planeGroup.position.z-m.target[2]);$('status').textContent=engineFailed?'MOTORAUSFALL · GLEITFLUG NACH NEW YORK · '+Math.round(distNY)+' m · FAHRWERK FÜR LANDUNG AUSFAHREN':'FLUG NACH NEW YORK · TRIEBWERK NOCH IN BETRIEB · '+Math.round(distNY)+' m';}else if(missionMarker&&m.target){missionMarker.rotation.y+=dt*.8;const dx=planeGroup.position.x-m.target[0],dz=planeGroup.position.z-m.target[2];$('status').textContent='MISSION: '+m.name+' · ZIEL '+Math.round(Math.hypot(dx,dz))+' m · '+(Math.abs(rollAngle)>.22?'FLÜGEL AUSRICHTEN':altitude<35?'ZU NIEDRIG':'ZIELANFLUG');}else if(activeMission===3&&engineFailed){$('status').textContent=nearRunway?'NOTLANDUNG · GUTE ANFLUGLAGE':'EMERGENCY LANDING · EXTEND GEAR / ALIGN WITH RUNWAY';}else if(activeMission===1&&!nearRunway){$('status').textContent=!gear?'LANDING · CONTINUE APPROACH':'LANDING · EXTEND LANDING GEAR';}else if(activeMission>=0&&missions[activeMission].type==='bellyLanding'){$('status').textContent='BELLY LANDING · KEEP GEAR RETRACTED · '+(altitude<35?'TOUCH DOWN ON RUNWAY':'RUNWAY APPROACH');}}
+  if(stormMode&&stormLight&&planeGroup){const phase=flightTime%7;stormLight.position.set(planeGroup.position.x+(Math.sin(flightTime*4)*90),planeGroup.position.y+140,planeGroup.position.z-100);stormLight.intensity=(phase<.12?5:phase>.2&&phase<.28?2.5:0);if(phase<.12&&Math.random()<.35){scene.background.setHex(0xb8d7f5);scene.fog.color.setHex(0x9bb8d7);}else if(phase>=.28){scene.background.setHex(0x27364b);scene.fog.color.setHex(0x27364b);}}if(rainPoints&&planeGroup){rainPoints.position.copy(planeGroup.position);const p=rainPoints.geometry.attributes.position.array;for(let i=0;i<p.length;i+=3){p[i+1]-=dt*(45+speed*.25);p[i]+=dt*-(forward.x*speed*.25);p[i+2]+=dt*-(forward.z*speed*.25);if(p[i+1]<-28){p[i+1]=60+Math.random()*25;p[i]=(Math.random()-.5)*150;p[i+2]=(Math.random()-.5)*150;}}rainPoints.geometry.attributes.position.needsUpdate=true;}
+ }
+ if(crashActive&&crashEffect){const elapsed=flightTime-crashStartTime;crashEffect.position.copy(planeGroup.position);crashEffect.rotation.y=heading;crashEffect.children.forEach((o,i)=>{if(o.userData.smoke){o.position.y+=dt*(2.2+i*.12);o.scale.setScalar(1+elapsed*.25);o.material.opacity=Math.max(0,.55-elapsed*.12);}else if(i>0){o.position.x+=o.userData.vx*dt;o.position.y+=o.userData.vy*dt;o.position.z+=o.userData.vz*dt;o.userData.vy-=22*dt;o.material.opacity=Math.max(0,1-elapsed*.65);}else{o.scale.setScalar(Math.max(.05,1-elapsed*1.5));o.material.opacity=Math.max(0,.95-elapsed*1.4);}});if(elapsed>3)crashEffect.visible=false;}
+ const cameraPos=new THREE.Vector3(),lookAt=new THREE.Vector3();
+ if(onFoot&&footGroup){
+  const fwd=new THREE.Vector3(Math.sin(footCameraYaw),0,-Math.cos(footCameraYaw));
+  cameraPos.set(footGroup.position.x-fwd.x*95,footGroup.position.y+48,footGroup.position.z-fwd.z*95);
+  lookAt.set(footGroup.position.x+fwd.x*28,footGroup.position.y+12+footCameraPitch*60,footGroup.position.z+fwd.z*28);
+  camera.position.lerp(cameraPos,1-Math.exp(-dt*5));camera.lookAt(lookAt);
+ }else if(view===0){
+  // Attach the follow camera behind the aircraft's tail. Keep a 23-unit
+  // gap from the tail and follow the model's full orientation.
+  const tailOffset=planes[current].size*5.3;
+  cameraPos.set(0,7,tailOffset+23);
+  planeGroup.localToWorld(cameraPos);
+  lookAt.set(0,0,0);
+  planeGroup.localToWorld(lookAt);
+  camera.position.copy(cameraPos);
+  camera.lookAt(lookAt);
+ }else if(view===1){
+  cameraPos.set(20,6,7);planeGroup.localToWorld(cameraPos);
+  lookAt.set(0,0,-5);planeGroup.localToWorld(lookAt);
+  camera.position.lerp(cameraPos,1-Math.exp(-dt*2.5));camera.lookAt(lookAt);
+ }else if(view===2){
+  $('passengerFrame').style.display='none';
+  // Cockpit camera is rigidly attached to the aircraft: position and orientation
+  // follow the plane immediately, including pitch, roll and turns.
+  cameraPos.set(0,1.25,-2.2);planeGroup.localToWorld(cameraPos);
+  camera.position.copy(cameraPos);
+  // Freie Cockpit-Sicht: Blickrichtung relativ zum Flugzeug drehen.
+  const cockpitLookRotation=new THREE.Euler(cockpitLookPitch,cockpitLookYaw,0,'YXZ');
+  camera.quaternion.copy(planeGroup.quaternion).multiply(new THREE.Quaternion().setFromEuler(cockpitLookRotation));
+ }else{
+  // Passenger seat just behind the wing: look out across the wing and engine.
+  $('passengerFrame').style.display='block';
+  const scale=planes[current].size;
+  cameraPos.set(.25*scale,.42*scale,2.1*scale);planeGroup.localToWorld(cameraPos);
+  const passengerLookRotation=new THREE.Euler(passengerLookPitch,passengerLookYaw,0,'YXZ');
+  const passengerDirection=new THREE.Vector3(1.0,-.11,.2).applyEuler(passengerLookRotation).normalize().applyQuaternion(planeGroup.quaternion);
+  lookAt.copy(cameraPos).add(passengerDirection.multiplyScalar(14*scale));
+  camera.position.copy(cameraPos);
+  // Kamera bleibt fest am Passagiersitz und dreht sich mit dem Flugzeug mit.
+  camera.up.set(0,1,0).applyQuaternion(planeGroup.quaternion).normalize();
+  camera.lookAt(lookAt);
+ }
+ ui();renderer.render(scene,camera);
+}
+requestAnimationFrame(render);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5))});
+function openHangar(){paused=true;$('hangarOverlay').classList.add('show');renderHangar()}
+function closeHangar(){ $('hangarOverlay').classList.remove('show');paused=false}
+function renderHangar(){$('hangarCredits').textContent=credits.toLocaleString('de-AT');$('planeGrid').innerHTML='';planes.forEach((p,i)=>{let card=document.createElement('div');card.className='planeCard';let ownedNow=owned.has(i),selected=current===i;card.innerHTML='<div class="planeIcon">'+p.emoji+'</div><h3>'+p.name+'</h3><p>'+p.type+'<br>Max. ca. '+p.speed+' km/h</p><div class="price">'+(p.price===0?'GRATIS':'✦ '+p.price.toLocaleString('de-AT'))+'</div><button class="uiBtn '+(selected?'primary':'')+'">'+(selected?'AUSGEWÄHLT':ownedNow?'FLIEGEN':'BUY')+'</button>';card.querySelector('button').onclick=()=>{if(ownedNow){current=i;makePlane(i);resetFlight();save();ui();renderHangar();updateSceneryButtons();closeHangar()}else if(credits>=p.price){credits-=p.price;owned.add(i);current=i;makePlane(i);resetFlight();save();ui();renderHangar();closeHangar()}else{$('status').textContent='NOT ENOUGH CREDITS — FLIGHT BONUS OR PAYPAL';alert('You do not have enough credits. You can open the PayPal donation page.')}};$('planeGrid').appendChild(card)})}
+function startAutoFlight(destination){if(!sceneryUnlocked(destination.name)){alert(destination.name+' is locked. Buy the scenery first or complete Mission 22 to unlock New York.');return;}flightRouteName=destination.name;flightRouteTarget={x:destination.x,z:destination.z};autoLandingEnabled=false;$('autoLandBtn').textContent='AUTO-LANDING: OFF';autopilotEnabled=true;autopilotAltitude=Math.max(80,altitude);autopilotHeading=heading;throttle=100;$('throttle').value=100;steerX=0;steerY=0;gyroX=0;gyroY=0;gear=false;gearTarget=0;$('gearBtn').textContent='▱ LANDING GEAR: EIN';$('autopilotBtn').textContent='AUTOPILOT: AN';paused=false;$('pauseOverlay').classList.remove('show');$('hangarOverlay').classList.remove('show');$('missionsOverlay').classList.remove('show');$('status').textContent='FLIGHT TO '+destination.name.toUpperCase()+' · AUTOPILOT AKTIV';}
+$('flightNYBtn').onclick=()=>startAutoFlight({name:'New York',x:-850,z:-13490});
+$('flightLABtn').onclick=()=>startAutoFlight({name:'Los Angeles',x:2200,z:-34720});
+$('flightSFBtn').onclick=()=>startAutoFlight({name:'San Francisco',x:-1950,z:-53550});
+$('hangarBtn').onclick=openHangar;$('closeHangar').onclick=closeHangar;$('missionsBtn').onclick=openMissions;$('nextMissionBtn').onclick=openMissions;$('closeMissions').onclick=()=>{$('missionsOverlay').classList.remove('show');paused=false};$('missionBackToFlight').onclick=()=>{$('missionsOverlay').classList.remove('show');paused=false};let cockpitLookYaw=0,cockpitLookPitch=0,passengerLookYaw=0,passengerLookPitch=0,cockpitTouchId=null,cockpitLastX=0,cockpitLastY=0;
+const gameCanvas=renderer.domElement;
+let footLookPointer=null,footLookX=0,footLookY=0;
+function isFootControlTarget(target){return !!(target&&target.closest&&target.closest('#footControls,.flightControls,.uiBtn,button,input,.overlay'));}
+window.addEventListener('pointerdown',e=>{
+ if(!onFoot||isFootControlTarget(e.target))return;
+ footLookPointer=e.pointerId;footLookX=e.clientX;footLookY=e.clientY;
+ if(e.cancelable)e.preventDefault();
+},{passive:false});
+window.addEventListener('pointermove',e=>{
+ if(!onFoot||footLookPointer!==e.pointerId)return;
+ const dx=e.clientX-footLookX,dy=e.clientY-footLookY;footLookX=e.clientX;footLookY=e.clientY;
+ footCameraYaw-=dx*.008;footCameraPitch=Math.max(-.7,Math.min(.35,footCameraPitch-dy*.004));
+ footYaw=footCameraYaw;if(footGroup)footGroup.rotation.y=footYaw;
+ if(e.cancelable)e.preventDefault();
+},{passive:false});
+function endFootLook(e){if(footLookPointer===e.pointerId)footLookPointer=null;}
+window.addEventListener('pointerup',endFootLook);
+window.addEventListener('pointercancel',endFootLook);
+gameCanvas.addEventListener('pointerdown',e=>{if((view!==2&&view!==3)||paused||$('startOverlay').classList.contains('show')||$('hangarOverlay').classList.contains('show')||$('missionsOverlay').classList.contains('show')||$('pauseOverlay').classList.contains('show'))return;cockpitTouchId=e.pointerId;cockpitLastX=e.clientX;cockpitLastY=e.clientY;gameCanvas.setPointerCapture(e.pointerId);});
+gameCanvas.addEventListener('pointermove',e=>{if((view!==2&&view!==3)||cockpitTouchId!==e.pointerId)return;const dx=e.clientX-cockpitLastX,dy=e.clientY-cockpitLastY;cockpitLastX=e.clientX;cockpitLastY=e.clientY;if(view===2){cockpitLookYaw=Math.max(-1.35,Math.min(1.35,cockpitLookYaw-dx*.006));cockpitLookPitch=Math.max(-.65,Math.min(.65,cockpitLookPitch-dy*.005));}else{passengerLookYaw=Math.max(-1.15,Math.min(1.15,passengerLookYaw-dx*.006));passengerLookPitch=Math.max(-.5,Math.min(.5,passengerLookPitch-dy*.005));}});
+function endCockpitLook(e){if(cockpitTouchId===e.pointerId)cockpitTouchId=null;}
+gameCanvas.addEventListener('pointerup',endCockpitLook);gameCanvas.addEventListener('pointercancel',endCockpitLook);
+$('viewBtn').onclick=()=>{view=(view+1)%4;$('viewBtn').textContent=['CAMERA: FOLLOW','CAMERA: SIDE','CAMERA: COCKPIT','CAMERA: PASSENGER'][view];$('passengerFrame').style.display=view===3?'block':'none';if(view!==2){cockpitLookYaw=0;cockpitLookPitch=0;}if(view!==3){passengerLookYaw=0;passengerLookPitch=0;}};
+$('autoLandBtn').onclick=()=>{autoLandingEnabled=!autoLandingEnabled;if(autoLandingEnabled){autopilotEnabled=false;$('autopilotBtn').textContent='AUTOPILOT: OFF';gear=false;gearTarget=0;$('gearBtn').textContent='▱ LANDING GEAR: EIN';gyroEnabled=false;$('gyroBtn').textContent='GYRO: OFF';$('autoLandBtn').textContent='AUTO-LANDING: ON';$('status').textContent='AUTO-LANDING ACTIVE · APPROACHING RUNWAY';}else{$('autoLandBtn').textContent='AUTO-LANDING: OFF';$('status').textContent='AUTO-LANDING ABORTED';}};
+$('autopilotBtn').onclick=()=>{autopilotEnabled=!autopilotEnabled;if(autopilotEnabled){autoLandingEnabled=false;$('autoLandBtn').textContent='AUTO-LANDING: OFF';autopilotHeading=heading;autopilotAltitude=Math.max(0,altitude);steerX=0;steerY=0;gyroX=0;gyroY=0;$('autopilotBtn').textContent='AUTOPILOT: AN';$('status').textContent='AUTOPILOT AKTIV · KURS UND ALTITUDE HALTEN';}else{$('autopilotBtn').textContent='AUTOPILOT: OFF';$('status').textContent='AUTOPILOT AUS · MANUAL CONTROL';}};
+$('gyroBtn').onclick=()=>{gyroEnabled=!gyroEnabled;if(gyroEnabled){gyroZeroBeta=null;gyroZeroGamma=null;$('gyroBtn').textContent='GYRO: AN';$('status').textContent='HANDY GERADE HALTEN ZUR KALIBRIERUNG'}else{$('gyroBtn').textContent='GYRO: OFF';gyroX=0;gyroY=0}};
+addEventListener('deviceorientation',e=>{if(!gyroEnabled||e.beta==null||e.gamma==null)return;if(gyroZeroBeta===null){gyroZeroBeta=e.beta;gyroZeroGamma=e.gamma}gyroY=Math.max(-1,Math.min(1,(e.beta-gyroZeroBeta)/28));gyroX=Math.max(-1,Math.min(1,(e.gamma-gyroZeroGamma)/28))});
+$('pauseBtn').onclick=()=>{paused=true;$('pauseOverlay').classList.add('show')};$('resumeBtn').onclick=()=>{$('pauseOverlay').classList.remove('show');paused=false};$('pauseHangarBtn').onclick=()=>{$('pauseOverlay').classList.remove('show');openHangar()};
+$('resetBtn').onclick=resetFlight;$('gearBtn').onclick=()=>{gear=!gear;gearTarget=gear?1:0;$('gearBtn').textContent=gear?'▱ LANDING GEAR: AUS':'▱ LANDING GEAR: EIN';$('status').textContent=gear?'RETRACTING LANDING GEAR …':'EXTENDING LANDING GEAR …'};
+
+const brakeBtn=$('brakeBtn');const releaseBrake=()=>{braking=false;brakeBtn.style.background='';};brakeBtn.addEventListener('pointerdown',e=>{e.preventDefault();braking=true;brakeBtn.setPointerCapture?.(e.pointerId);brakeBtn.style.background='#9b2f2f';$('status').textContent='BREMSEN AKTIV';});brakeBtn.addEventListener('pointerup',releaseBrake);brakeBtn.addEventListener('pointercancel',releaseBrake);brakeBtn.addEventListener('lostpointercapture',releaseBrake);
+$('throttle').addEventListener('input',e=>{throttle=+e.target.value;ui()});
+const stick=$('stick'),knob=$('knob');let dragging=false;
+function moveStick(e){let r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=(e.clientX-cx)/(r.width*.34),dy=(e.clientY-cy)/(r.height*.34);steerX=Math.max(-1,Math.min(1,dx));steerY=Math.max(-1,Math.min(1,dy));knob.style.transform='translate('+steerX*27+'px,'+steerY*27+'px)'}
+stick.addEventListener('pointerdown',e=>{dragging=true;stick.setPointerCapture(e.pointerId);moveStick(e)});stick.addEventListener('pointermove',e=>{if(dragging)moveStick(e)});function release(){dragging=false;steerX=0;steerY=0;knob.style.transform='translate(0,0)'}stick.addEventListener('pointerup',release);stick.addEventListener('pointercancel',release);
+
+
+let authMode='login';
+function setAuthMode(mode){
+ authMode=mode;
+ $('authModeLogin').classList.toggle('primary',mode==='login');
+ $('authModeSignup').classList.toggle('primary',mode==='signup');
+ $('authSubmit').textContent=mode==='login'?'SIGN IN':'CREATE ACCOUNT';
+ $('authPassword').autocomplete=mode==='login'?'current-password':'new-password';
+ $('legalLoginNotice').style.display=mode==='login'?'':'none';
+ $('browserDataWarning').style.display=mode==='login'?'':'none';
+ $('authStatus').textContent='';
+}
+$('authModeLogin').onclick=()=>setAuthMode('login');
+$('authModeSignup').onclick=()=>setAuthMode('signup');
+$('authForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const email=$('authEmail').value.trim().toLowerCase();
+ const password=$('authPassword').value;
+ const submit=$('authSubmit'),status=$('authStatus');
+ if(!email||password.length<8){status.textContent='Please enter a valid email address and a password with at least 8 characters.';return;}
+ submit.disabled=true;status.textContent=authMode==='login'?'Signing in …':'Konto wird erstellt …';
+ try{
+  if(authMode==='signup'){
+   const {data,error}=await supabase.auth.signUp({email,password});
+   if(error)throw error;
+   if(data.session){
+    $('authPassword').value='';await loadCloudProgress(data.session.user);$('authOverlay').classList.remove('show');$('startOverlay').classList.remove('show');if(userNeedsPrivateTest(data.session.user))showPrivateTestOverlay();else $('startOverlay').classList.add('show');
+    status.textContent='Konto erstellt.';
+   }else{
+    setAuthMode('login');
+    status.textContent='Check your email and verify your email address. Check your spam folder if needed.';
+   }
+  }else{
+   const {data,error}=await supabase.auth.signInWithPassword({email,password});
+   if(error)throw error;
+   if(!data.session)throw new Error('Keine aktive Sitzung erhalten. Bitte versuche es erneut.');
+   $('authPassword').value='';await loadCloudProgress(data.session.user);$('authOverlay').classList.remove('show');$('startOverlay').classList.remove('show');if(userNeedsPrivateTest(data.session.user))showPrivateTestOverlay();else $('startOverlay').classList.add('show');
+  }
+ }catch(err){
+  status.textContent=err?.message||'Sign-in failed. Please check your details.';
+ }finally{submit.disabled=false;}
+});
+$('privateBucketTestBtn').onclick=async()=>{
+ const btn=$('privateBucketTestBtn'),status=$('privateBucketTestStatus');
+ const testValue=$('privateBucketTestInput').value.trim();
+ if(!testValue){status.textContent='';$('privateBucketTestInput').focus();return;}
+  if(testValue.length>100){status.textContent='Please enter no more than 100 characters.';return;}
+ btn.disabled=true;status.textContent='Saving …';
+ try{
+  const {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+  if(sessionError)throw sessionError;
+  const user=sessionData.session?.user;
+  if(!user)throw new Error('Please sign in first.');
+  const marketingConsent=false;
+  const consentRecordedAt=new Date().toISOString();
+  const testRecord={
+   testOnly:true,
+   note:'Synthetic test data and the signed-in account email address will be saved together. Do not use real passwords or confidential data.',
+   email:user.email||null,
+   testValue,
+   marketingSharingConsent:marketingConsent,
+   marketingSharingConsentAt:marketingConsent?consentRecordedAt:null,
+   marketingSharingPurpose:marketingConsent?'Weitergabe an Werbe- und Marketingunternehmen zu Werbe- und Marketingzwecken':null,
+   testedAt:consentRecordedAt
+  };
+  const path=Date.now()+'-'+crypto.randomUUID()+'-test-value.json';
+  const {error}=await supabase.storage.from('testzahlen').upload(path,new Blob([JSON.stringify(testRecord,null,2)],{type:'application/json'}),{upsert:false,contentType:'application/json'});
+  if(error)throw error;
+  markPrivateTestSavedLocally(user);
+  const {error:profileFlagError}=await supabase.auth.updateUser({data:{private_test_saved:true}});
+  $('privateBucketTestInput').value='';
+  status.textContent=profileFlagError?'Test data saved. The status could not be saved to the account; this message will not appear again on this device.':'';
+  $('privateTestContinueBtn').style.display='block';
+ }catch(err){
+  status.textContent='Save failed. Please try again.';
+ }finally{btn.disabled=false;}
+};
+$('privateTestContinueBtn').onclick=()=>{$('privateTestContinueBtn').style.display='none';$('privateTestOverlay').classList.remove('show');$('startOverlay').classList.add('show');};
+$('authSignOut').onclick=async()=>{
+ try{
+  const {error}=await supabase.auth.signOut();
+  if(error)throw error;
+  clearTimeout(cloudSaveTimer);cloudSaveReady=false;cloudSaveUserId=null;
+  $('startOverlay').classList.remove('show');$('privateTestOverlay').classList.remove('show');$('authOverlay').classList.add('show');setAuthMode('login');
+  $('authStatus').textContent='Du wurdest abgemeldet.';
+ }catch(err){$('authStatus').textContent=err?.message||'Sign-out failed.';$('authOverlay').classList.add('show');}
+};
+(async()=>{
+ try{
+  const {data,error}=await supabase.auth.getSession();
+  if(error)throw error;
+  if(data.session){
+   await loadCloudProgress(data.session.user);$('authOverlay').classList.remove('show');$('startOverlay').classList.remove('show');if(userNeedsPrivateTest(data.session.user))showPrivateTestOverlay();else $('startOverlay').classList.add('show');
+  }else{
+   $('authOverlay').classList.add('show');$('startOverlay').classList.remove('show');
+  }
+ }catch(err){$('authOverlay').classList.add('show');$('startOverlay').classList.remove('show');$('authStatus').textContent='Could not reach Supabase. Check your internet connection and reload the page.';}
+})();
+
+$('emailSignupClose').onclick=()=>{$('emailSignupOverlay').classList.remove('show')};
+$('emailSignupForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const email=$('signupEmail').value.trim().toLowerCase();
+ if(!email||!$('signupConsent').checked)return;
+ const submit=$('emailSignupSubmit'),status=$('emailSignupStatus');
+ submit.disabled=true;status.textContent='Saving sign-in …';
+ try{
+  const response=await fetch(SUPABASE_URL+'/rest/v1/air_simulator_email_signups',{
+   method:'POST',
+   headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+   body:JSON.stringify({email,consent_updates:true,consent_text_version:'air-updates-v1'})
+  });
+  if(response.status===409){status.textContent='Diese Email address ist bereits registriert.';}
+  else if(!response.ok){throw new Error('Save failed ('+response.status+'). Please try again later.');}
+  else{$('signupEmail').value='';$('signupConsent').checked=false;status.textContent='Danke! Deine Einwilligung wurde gespeichert. Ein Widerruf ist jederzeit möglich.';}
+ }catch(err){status.textContent=err.message||'Sign-in failed. Please try again later.';}
+ finally{submit.disabled=false;}
+});
+
+let paypalSupportStartedAt=0,paypalSupportLeftGame=false,paypalSupportHandled=false,paypalSelectedCredits=0;
+function checkPaypalSupportReturn(){
+ if(!paypalSupportStartedAt||!paypalSupportLeftGame||paypalSupportHandled||document.visibilityState==='hidden')return;
+ paypalSupportHandled=true;
+ const elapsed=Date.now()-paypalSupportStartedAt;
+ const creditsToAward=paypalSelectedCredits;
+ paypalSupportStartedAt=0;
+ paypalSupportLeftGame=false;
+ paypalSelectedCredits=0;
+ try{sessionStorage.removeItem('airSimPaypalSupportStartedAt');sessionStorage.removeItem('airSimPaypalSupportCredits');}catch{}
+ if(elapsed>30000&&creditsToAward>0){
+  credits+=creditsToAward;save();ui();renderHangar();
+  $('status').textContent='CREDITS HAVE BEEN ADDED';
+ }
+}
+window.addEventListener('blur',()=>{if(paypalSupportStartedAt)paypalSupportLeftGame=true;});
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='hidden'&&paypalSupportStartedAt)paypalSupportLeftGame=true;
+ if(document.visibilityState==='visible')checkPaypalSupportReturn();
+});
+window.addEventListener('focus',checkPaypalSupportReturn);
+window.addEventListener('pageshow',checkPaypalSupportReturn);
+document.querySelectorAll('.buyCreditsBtn').forEach(button=>{
+ button.onclick=()=>{
+  paypalSelectedCredits=Number(button.dataset.credits)||0;
+  paypalSupportStartedAt=Date.now();
+  paypalSupportLeftGame=false;
+  paypalSupportHandled=false;
+  try{sessionStorage.setItem('airSimPaypalSupportStartedAt',String(paypalSupportStartedAt));sessionStorage.setItem('airSimPaypalSupportCredits',String(paypalSelectedCredits));}catch{}
+  window.open(paypal,'_blank','noopener,noreferrer');
+ };
+});
+
+function startFlightAudio(){if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();const master=audioCtx.createGain();master.gain.value=.8;master.connect(audioCtx.destination);engineOsc=audioCtx.createOscillator();engineOsc.type='sawtooth';engineGain=audioCtx.createGain();engineGain.gain.value=.025;const engineFilter=audioCtx.createBiquadFilter();engineFilter.type='lowpass';engineFilter.frequency.value=260;engineOsc.connect(engineFilter);engineFilter.connect(engineGain);engineGain.connect(master);engineOsc.start();const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*2,audioCtx.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.35;rainNoiseSource=audioCtx.createBufferSource();rainNoiseSource.buffer=buffer;rainNoiseSource.loop=true;rainFilter=audioCtx.createBiquadFilter();rainFilter.type='lowpass';rainFilter.frequency.value=850;rainGain=audioCtx.createGain();rainGain.gain.value=.13;rainNoiseSource.connect(rainFilter);rainFilter.connect(rainGain);rainGain.connect(master);rainNoiseSource.start();}catch(e){console.warn('Audio unavailable',e);}}
+function sceneryUnlocked(city){if(city==='New York')return completedMissions.has(21)||purchasedSceneries.has(city);return purchasedSceneries.has(city);}function updateSceneryButtons(){const items=[['New York','startNewYorkBtn',10000,'🗽 NEW YORK'],['Los Angeles','startLosAngelesBtn',20000,'🌴 LOS ANGELES'],['San Francisco','startSanFranciscoBtn',30000,'🌉 SAN FRANCISCO']];for(const [city,id,cost,label] of items){const b=$(id);if(!b)continue;const unlocked=sceneryUnlocked(city);b.textContent=unlocked?label+' · FREIGESCHALTET':label+' · 🔒 '+cost.toLocaleString('de-AT')+' CREDITS'+(city==='New York'?' OR MISSION 22':'');b.style.opacity=unlocked?'1':'.82';}}function chooseScenery(city,cost){if(sceneryUnlocked(city)){startAtScenery(city);return;}const reason=city==='New York'?'Complete Mission 22 or purchase New York for '+cost.toLocaleString('de-AT')+' credits to unlock.':'Unlock '+city+' for '+cost.toLocaleString('de-AT')+' credits to unlock.';if(credits<cost){alert(reason+' You currently have '+credits.toLocaleString('de-AT')+' credits.');return;}if(!confirm(city+' for '+cost.toLocaleString('de-AT')+' credits permanently?'))return;credits-=cost;purchasedSceneries.add(city);save();ui();updateSceneryButtons();startAtScenery(city);}function startAtScenery(city){if(!sceneryUnlocked(city)){updateSceneryButtons();alert(city==='New York'?'New York is locked. Complete Mission 22 or purchase the scenery for 10,000 credits.':'This scenery is locked. Purchase it with credits first.');return;}startFlightAudio();if(activeMission>=0){activeMission=-1;missionFailed=false;}if(onFoot)setOnFootMode(false);planeGroup.visible=true;gear=true;resetFlight();heading=0;speed=0;altitude=0;steerX=0;steerY=0;rollAngle=0;pitchAngle=0;setNightMode(false);setStormMode(false);if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}if(city==='New York'){planeGroup.position.set(-850,-13.3,-13490);$('status').textContent='NEW YORK · READY TO FLY';}else if(city==='Los Angeles'){planeGroup.position.set(1940,-13.3,-34720);$('status').textContent='LOS ANGELES · READY TO FLY';}else if(city==='San Francisco'){planeGroup.position.set(-2200,-13.3,-53550);$('status').textContent='SAN FRANCISCO · READY TO FLY';}missionPhase='outbound';$('gearBtn').textContent='▱ LANDING GEAR: AUS';$('startOverlay').classList.remove('show');paused=false;ui();} $('startBtn').onclick=()=>{startFlightAudio();$('startOverlay').classList.remove('show');paused=false};$('startNewYorkBtn').onclick=()=>chooseScenery('New York',10000);$('startLosAngelesBtn').onclick=()=>chooseScenery('Los Angeles',20000);$('startSanFranciscoBtn').onclick=()=>chooseScenery('San Francisco',30000);$('startHangarBtn').onclick=()=>{startFlightAudio();$('startOverlay').classList.remove('show');openHangar()};
+ui();renderHangar();updateSceneryButtons();
+</script>
+</body></html>
