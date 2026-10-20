@@ -65,6 +65,24 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   </div>
   <p class="lead">For the best experience, use a modern browser and keep the game tab open while playing. Follow any control hints shown in the game interface.</p>
 </section>
+  <section id="game-video-ad" class="card">
+    <h2>Game video</h2>
+    <p>Optional video content provided by GameMonetize may appear below.</p>
+    <div id="gamemonetize-video" style="width:100%;min-height:240px;overflow:hidden;border-radius:12px"></div>
+    <script type="text/javascript">
+       window.VIDEO_OPTIONS = {
+           gameid : "4kci7og3klgj0ivy2wz3gdvd9dth5e7n",
+           width  : "100%",
+           height : "480px",
+           color  : "#3f007e",
+           getads  : "true"
+       };
+       (function (a, b, c) {
+          var d = a.getElementsByTagName(b)[0];
+          a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/video.js", d.parentNode.insertBefore(a, d))
+       })(document, "script", "gamemonetize-video-api");
+    </script>
+  </section>
 <section id="about" class="card">
   <h2>About Air Simulator</h2>
   <p>Ohets Air Simulator is an independent browser game project. It is intended for entertainment and is not a certified flight-training tool. Aircraft behaviour and controls may differ from real-world aviation.</p>
