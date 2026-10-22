@@ -25,6 +25,23 @@ h1{font-size:clamp(2.2rem,7vw,4.5rem);line-height:1.05;letter-spacing:-.04em;mar
 section{margin-top:30px}.ad-section{padding:14px 0;min-height:100px}.ad-label{font-size:.75rem;text-align:center;color:var(--muted);margin-bottom:6px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px}
 .card{border:1px solid var(--line);border-radius:16px;padding:20px;background:#0c2030cc}.card h2,.card h3{margin-top:0}.card p{color:var(--muted);margin-bottom:0}
 footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.92rem}
+
+.game-tools{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.game-tools input,.game-tools select{background:#081a28;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;min-height:44px;max-width:100%}
+.game-tools input{flex:1;min-width:180px}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:14px}
+.game-tile{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0c2030cc}
+.game-tile img{width:100%;aspect-ratio:16/10;object-fit:cover;background:#10283a}
+.game-tile .game-copy{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.game-tile h3{font-size:1rem;margin:0}
+.game-tile p{font-size:.88rem;color:var(--muted);margin:0}
+.game-tile button,.game-player button{border:0;border-radius:9px;padding:10px 14px;background:var(--accent);color:#042033;font-weight:800;cursor:pointer}
+.game-tile button{margin-top:auto}
+.game-player{margin-top:18px;border:1px solid var(--line);border-radius:16px;padding:14px;background:#06131f}
+.game-player iframe{display:block;width:100%;height:min(70vh,620px);min-height:320px;border:0;border-radius:10px;background:#000}
+.game-player-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.game-status{color:var(--muted);padding:12px 0}
+@media(max-width:480px){.game-player iframe{min-height:260px}}
 </style>
 </head>
 <body>
@@ -65,6 +82,21 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   </div>
   <p class="lead">For the best experience, use a modern browser and keep the game tab open while playing. Follow any control hints shown in the game interface.</p>
 </section>
+  <section id="more-games" aria-labelledby="more-games-title">
+    <h2 id="more-games-title">More games</h2>
+    <p class="lead">Browse additional HTML5 games. Select a game to try loading it here on the Ohets website.</p>
+    <div class="game-tools">
+      <input id="game-search" type="search" placeholder="Search games…" aria-label="Search games">
+      <select id="game-category" aria-label="Filter by category"><option value="">All categories</option></select>
+    </div>
+    <p id="game-feed-status" class="game-status" role="status">Loading games…</p>
+    <div id="game-feed-grid" class="games-grid"></div>
+    <div id="game-player" class="game-player" hidden>
+      <div class="game-player-head"><h3 id="game-player-title">Selected game</h3><button id="game-close" type="button">Close game</button></div>
+      <iframe id="game-frame" title="GameMonetize game player" allow="fullscreen; autoplay; gamepad; accelerometer; gyroscope" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <p class="game-status">If the game does not load here, its provider may block embedding. In that case, use the game's own play page.</p>
+    </div>
+  </section>
   <section id="game-video-ad" class="card">
     <h2>Game video</h2>
     <p>Optional video content provided by GameMonetize may appear below.</p>
@@ -99,6 +131,141 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   </div>
 </section>
 <footer><span>© Ohets · Air Simulator</span><span><a href="privacy.html">Privacy Policy</a> · <a href="game.html">Open the game</a></span></footer>
+
+<script>
+(function () {
+  const feedUrl = "https://gamemonetize.com/feed.php?format=0&num=50&page=1";
+  const grid = document.getElementById("game-feed-grid");
+  const status = document.getElementById("game-feed-status");
+  const search = document.getElementById("game-search");
+  const category = document.getElementById("game-category");
+  const player = document.getElementById("game-player");
+  const frame = document.getElementById("game-frame");
+  const playerTitle = document.getElementById("game-player-title");
+  const closeButton = document.getElementById("game-close");
+  let games = [];
+
+  function textValue(obj, keys) {
+    for (const key of keys) {
+      if (obj && obj[key] != null && String(obj[key]).trim()) return String(obj[key]).trim();
+    }
+    return "";
+  }
+  function parseXml(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) return [];
+    return Array.from(doc.querySelectorAll("game")).map(node => {
+      const item = {};
+      Array.from(node.children).forEach(child => item[child.tagName.toLowerCase()] = child.textContent.trim());
+      return item;
+    });
+  }
+  function normalize(raw) {
+    const list = Array.isArray(raw) ? raw :
+      (raw && Array.isArray(raw.games) ? raw.games :
+      (raw && Array.isArray(raw.data) ? raw.data : []));
+    return list.map(g => ({
+      title: textValue(g, ["title", "name", "game_name"]),
+      description: textValue(g, ["description", "desc"]),
+      url: textValue(g, ["url", "game_url", "play_url", "gameUrl"]),
+      thumb: textValue(g, ["thumb", "thumbnail", "thumbnail_url", "image", "image_url"]),
+      category: textValue(g, ["category", "genre", "type"]) || "Other"
+    })).filter(g => g.title && g.url);
+  }
+  function safeUrl(value) {
+    try {
+      const u = new URL(value);
+      return (u.protocol === "https:" || u.protocol === "http:") ? u.href : "";
+    } catch (_) { return ""; }
+  }
+  function render() {
+    const q = search.value.trim().toLowerCase();
+    const c = category.value;
+    const visible = games.filter(g =>
+      (!q || (g.title + " " + g.description + " " + g.category).toLowerCase().includes(q)) &&
+      (!c || g.category === c)
+    );
+    grid.replaceChildren();
+    if (!visible.length) {
+      status.hidden = false;
+      status.textContent = games.length ? "No games match your search." : "No games are available right now.";
+      return;
+    }
+    status.hidden = true;
+    visible.forEach(g => {
+      const card = document.createElement("article");
+      card.className = "game-tile";
+      if (g.thumb && safeUrl(g.thumb)) {
+        const img = document.createElement("img");
+        img.src = safeUrl(g.thumb);
+        img.alt = "";
+        img.loading = "lazy";
+        img.onerror = () => img.remove();
+        card.appendChild(img);
+      }
+      const copy = document.createElement("div");
+      copy.className = "game-copy";
+      const heading = document.createElement("h3");
+      heading.textContent = g.title;
+      copy.appendChild(heading);
+      const tag = document.createElement("p");
+      tag.textContent = g.category;
+      copy.appendChild(tag);
+      if (g.description) {
+        const desc = document.createElement("p");
+        desc.textContent = g.description.length > 130 ? g.description.slice(0, 127) + "…" : g.description;
+        copy.appendChild(desc);
+      }
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Play here";
+      button.addEventListener("click", () => {
+        const url = safeUrl(g.url);
+        if (!url) { status.hidden = false; status.textContent = "This game has an invalid play URL."; return; }
+        player.hidden = false;
+        playerTitle.textContent = g.title;
+        frame.src = url;
+        player.scrollIntoView({behavior: "smooth", block: "start"});
+      });
+      copy.appendChild(button);
+      card.appendChild(copy);
+      grid.appendChild(card);
+    });
+  }
+  closeButton.addEventListener("click", () => {
+    frame.src = "about:blank";
+    player.hidden = true;
+  });
+  search.addEventListener("input", render);
+  category.addEventListener("change", render);
+
+  fetch(feedUrl)
+    .then(response => {
+      if (!response.ok) throw new Error("Feed request failed (" + response.status + ")");
+      return response.text();
+    })
+    .then(body => {
+      let parsed;
+      try { parsed = normalize(JSON.parse(body)); }
+      catch (_) { parsed = normalize(parseXml(body)); }
+      if (!parsed.length) throw new Error("The feed returned no readable games.");
+      games = parsed;
+      const categories = Array.from(new Set(games.map(g => g.category))).sort((a,b) => a.localeCompare(b));
+      categories.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        category.appendChild(option);
+      });
+      render();
+    })
+    .catch(() => {
+      status.hidden = false;
+      status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
+    });
+})();
+</script>
+
 </main>
 </body>
 </html>
