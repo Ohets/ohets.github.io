@@ -143,7 +143,13 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   const frame = document.getElementById("game-frame");
   const playerTitle = document.getElementById("game-player-title");
   const closeButton = document.getElementById("game-close");
-  let games = [];
+  let games = [{
+    title: "Real Airplane Simulator",
+    description: "Here is an airplane-driving simulation game. There are many different airplanes to unlock and select in the garage. Following the green arrow and lines, adjust the height instantly. More practice will help you complete all levels.",
+    url: "https://html5.gamemonetize.co/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/",
+    thumb: "https://img.gamemonetize.com/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/512x384.jpg",
+    category: "Action"
+  }];
 
   function textValue(obj, keys) {
     for (const key of keys) {
@@ -154,7 +160,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   function parseXml(xmlText) {
     const doc = new DOMParser().parseFromString(xmlText, "application/xml");
     if (doc.querySelector("parsererror")) return [];
-    return Array.from(doc.querySelectorAll("game")).map(node => {
+    return Array.from(doc.querySelectorAll("game, item")).map(node => {
       const item = {};
       Array.from(node.children).forEach(child => item[child.tagName.toLowerCase()] = child.textContent.trim());
       return item;
@@ -249,7 +255,9 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       try { parsed = normalize(JSON.parse(body)); }
       catch (_) { parsed = normalize(parseXml(body)); }
       if (!parsed.length) throw new Error("The feed returned no readable games.");
-      games = parsed;
+      const featured = games;
+      const knownUrls = new Set(featured.map(g => safeUrl(g.url)));
+      games = featured.concat(parsed.filter(g => !knownUrls.has(safeUrl(g.url))));
       const categories = Array.from(new Set(games.map(g => g.category))).sort((a,b) => a.localeCompare(b));
       categories.forEach(name => {
         const option = document.createElement("option");
@@ -260,8 +268,14 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       render();
     })
     .catch(() => {
-      status.hidden = false;
-      status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
+      if (games.length) {
+        render();
+        status.hidden = false;
+        status.textContent = "Showing featured games. More games could not be loaded automatically right now.";
+      } else {
+        status.hidden = false;
+        status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
+      }
     });
 })();
 </script>
