@@ -40,6 +40,9 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 .game-player{margin-top:18px;border:1px solid var(--line);border-radius:16px;padding:14px;background:#06131f}
 .game-player iframe{display:block;width:100%;height:min(70vh,620px);min-height:320px;border:0;border-radius:10px;background:#000}
 .game-player-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.game-player:fullscreen{width:100vw;height:100vh;margin:0;padding:12px;border:0;border-radius:0;display:flex;flex-direction:column;background:#000}
+.game-player:fullscreen #game-frame{flex:1;width:100%;height:100%;min-height:0;border-radius:0}
+.game-player:fullscreen .game-status{display:none}
 .game-status{color:var(--muted);padding:12px 0}
 @media(max-width:480px){.game-player iframe{min-height:260px}}
 </style>
@@ -92,7 +95,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     <p id="game-feed-status" class="game-status" role="status">Loading games…</p>
     <div id="game-feed-grid" class="games-grid"></div>
     <div id="game-player" class="game-player" hidden>
-      <div class="game-player-head"><h3 id="game-player-title">Selected game</h3><button id="game-close" type="button">Close game</button></div>
+      <div class="game-player-head"><h3 id="game-player-title">Selected game</h3><div class="game-tools"><button id="game-fullscreen" type="button">Fullscreen</button><button id="game-close" type="button">Close game</button></div></div>
       <iframe id="game-frame" title="GameMonetize game player" allow="fullscreen; autoplay; gamepad; accelerometer; gyroscope" allowfullscreen loading="lazy" referrerpolicy="origin"></iframe>
       <p class="game-status">If the game does not load here, its provider may block embedding. In that case, use the game's own play page.</p>
     </div>
@@ -143,6 +146,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   const frame = document.getElementById("game-frame");
   const playerTitle = document.getElementById("game-player-title");
   const closeButton = document.getElementById("game-close");
+  const fullscreenButton = document.getElementById("game-fullscreen");
   let games = [{
     title: "Real Airplane Simulator",
     description: "Here is an airplane-driving simulation game. There are many different airplanes to unlock and select in the garage. Following the green arrow and lines, adjust the height instantly. More practice will help you complete all levels.",
@@ -232,12 +236,33 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
         playerTitle.textContent = g.title;
         frame.src = url;
         player.scrollIntoView({behavior: "smooth", block: "start"});
+        // Fullscreen must be requested directly from the user click; browsers may deny it on some devices.
+        if (frame.requestFullscreen) {
+          frame.requestFullscreen().catch(() => {
+            status.hidden = false;
+            status.textContent = "Game loaded. If fullscreen did not open automatically, tap the Fullscreen button. Your browser may require a direct user action.";
+          });
+        } else {
+          status.hidden = false;
+          status.textContent = "Game loaded. Your browser does not support automatic fullscreen here; try the Fullscreen button or the game's own fullscreen control.";
+        }
       });
       copy.appendChild(button);
       card.appendChild(copy);
       grid.appendChild(card);
     });
   }
+  fullscreenButton.addEventListener("click", () => {
+    if (frame.requestFullscreen) {
+      frame.requestFullscreen().catch(() => {
+        status.hidden = false;
+        status.textContent = "Fullscreen was blocked by the browser. Try the fullscreen control inside the game, if available.";
+      });
+    } else {
+      status.hidden = false;
+      status.textContent = "Fullscreen is not supported by this browser.";
+    }
+  });
   closeButton.addEventListener("click", () => {
     frame.src = "about:blank";
     player.hidden = true;
