@@ -337,7 +337,6 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     </div>
     <p class="game-status">Die Unterstützung ist freiwillig. Du kannst die Website auch ohne Klick weiter nutzen.</p>
     <div class="actions">
-      <button class="button secondary" id="ohets-continue-without-support" type="button">Ohne Unterstützung weiter</button>
       <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
     </div>
   </div>
@@ -350,7 +349,6 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     reminder.classList.remove("is-visible");
     reminder.setAttribute("aria-hidden", "true");
   }
-  document.getElementById("ohets-continue-without-support").addEventListener("click", hideReminder);
   document.getElementById("ohets-leave-website").addEventListener("click", function () {
     const previous = document.referrer;
     try {
