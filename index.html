@@ -55,6 +55,13 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 .support-reminder .actions{margin-top:22px;justify-content:center}
 .support-reminder-close{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:transparent;color:var(--text);font:inherit;cursor:pointer}
 
+/* Foreground notice for the Play here unlock message */
+.game-notice-backdrop{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:20px;background:#020914eF}
+.game-notice-backdrop.is-visible{display:flex}
+.game-notice{width:min(100%,460px);padding:26px;border:1px solid var(--line);border-radius:18px;background:#10283a;color:var(--text);box-shadow:0 18px 60px #000c;text-align:center}
+.game-notice p{color:var(--muted);margin:10px 0 20px}
+.game-notice button{border:0;border-radius:10px;padding:11px 20px;background:var(--accent);color:#042033;font-weight:800;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -212,7 +219,24 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       return (u.protocol === "https:" || u.protocol === "http:") ? u.href : "";
     } catch (_) { return ""; }
   }
+  const gameNotice = document.getElementById("ohets-game-notice");
+  const gameNoticeMessage = document.getElementById("ohets-game-notice-message");
+  function showGameNotice(message) {
+    if (!gameNotice || !gameNoticeMessage) return;
+    gameNoticeMessage.textContent = message;
+    gameNotice.classList.add("is-visible");
+    gameNotice.setAttribute("aria-hidden", "false");
+    document.getElementById("ohets-game-notice-close").focus();
+  }
+  function closeGameNotice() {
+    if (!gameNotice) return;
+    gameNotice.classList.remove("is-visible");
+    gameNotice.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("ohets-game-notice-close").addEventListener("click", closeGameNotice);
+
   function openSelectedGame(url, title) {
+    closeGameNotice();
     player.hidden = false;
     playerTitle.textContent = title;
     frame.src = url;
@@ -245,6 +269,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       const remaining = Math.ceil((10000 - elapsedMs) / 1000);
       status.hidden = false;
       status.textContent = "Please watch the advertisement for at least 10 seconds to unlock the game. (" + remaining + " seconds remaining.)";
+      showGameNotice(status.textContent);
     }
   }
 
@@ -385,6 +410,13 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     <div class="actions">
       <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
     </div>
+  </div>
+</div>
+<div id="ohets-game-notice" class="game-notice-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="ohets-game-notice-title" aria-describedby="ohets-game-notice-message" aria-hidden="true">
+  <div class="game-notice">
+    <h2 id="ohets-game-notice-title">Game locked</h2>
+    <p id="ohets-game-notice-message"></p>
+    <button id="ohets-game-notice-close" type="button">OK</button>
   </div>
 </div>
 <script>
