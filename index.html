@@ -336,6 +336,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Entwickler mit 0,99 € unterstützen</a>
     </div>
     <p class="game-status">Die Unterstützung ist freiwillig. Du kannst die Website auch ohne Klick weiter nutzen.</p>
+    <p id="ohets-paypal-timer-status" class="game-status" role="status" aria-live="polite"></p>
     <div class="actions">
       <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
     </div>
@@ -345,10 +346,48 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 (function () {
   const reminder = document.getElementById("ohets-support-reminder");
   if (!reminder) return;
-  function hideReminder() {
-    reminder.classList.remove("is-visible");
-    reminder.setAttribute("aria-hidden", "true");
+  const paypalLink = reminder.querySelector('a[href*="paypal.com/donate"]');
+  const timerStatus = document.getElementById("ohets-paypal-timer-status");
+  const timerKey = "ohets_paypal_timer_started_at";
+  let timerHandled = false;
+
+  if (paypalLink) {
+    paypalLink.addEventListener("click", function () {
+      try {
+        sessionStorage.setItem(timerKey, String(Date.now()));
+        timerHandled = false;
+        if (timerStatus) timerStatus.textContent = "30-Sekunden-Zeitmessung gestartet. Kehre nach deinem Besuch zu dieser Seite zurück.";
+      } catch (_) {
+        if (timerStatus) timerStatus.textContent = "Die Zeitmessung ist in diesem Browser nicht verfügbar.";
+      }
+    });
   }
+
+  function stopPaypalTimerOnReturn() {
+    if (timerHandled || document.hidden) return;
+    let startedAt;
+    try {
+      startedAt = Number(sessionStorage.getItem(timerKey));
+      if (!startedAt) return;
+      sessionStorage.removeItem(timerKey);
+    } catch (_) {
+      return;
+    }
+    timerHandled = true;
+    const elapsed = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+    if (timerStatus) {
+      timerStatus.textContent = elapsed >= 30
+        ? "Zeitmessung beendet: " + elapsed + " Sekunden seit dem Öffnen von PayPal. Dies bestätigt keine Spende."
+        : "Zeitmessung beendet: " + elapsed + " Sekunden seit dem Öffnen von PayPal. Dies bestätigt keine Spende.";
+    }
+  }
+
+  window.addEventListener("focus", stopPaypalTimerOnReturn);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) stopPaypalTimerOnReturn();
+  });
+  window.addEventListener("pageshow", stopPaypalTimerOnReturn);
+
   document.getElementById("ohets-leave-website").addEventListener("click", function () {
     const previous = document.referrer;
     try {
