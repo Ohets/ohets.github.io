@@ -44,6 +44,16 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 .game-player:fullscreen .game-status{display:none}
 .game-status{color:var(--muted);padding:12px 0}
 @media(max-width:480px){.game-player iframe{min-height:260px}}
+
+/* Ohets Games voluntary support reminder */
+.support-reminder-backdrop{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:#000b}
+.support-reminder-backdrop.is-visible{display:flex}
+.support-reminder{width:min(100%,520px);padding:24px;border:1px solid var(--line);border-radius:18px;background:#10283a;color:var(--text);box-shadow:0 20px 70px #0009}
+.support-reminder h2{margin:0 0 10px}
+.support-reminder p{color:var(--muted)}
+.support-reminder .actions{margin-top:18px}
+.support-reminder-close{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:transparent;color:var(--text);font:inherit;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -315,5 +325,44 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 </script>
 
 </main>
+
+<div id="ohets-support-reminder" class="support-reminder-backdrop" role="dialog" aria-modal="true" aria-labelledby="ohets-reminder-title" aria-hidden="true">
+  <div class="support-reminder">
+    <h2 id="ohets-reminder-title">Unterstütze Ohets Games</h2>
+    <p>Werbung ansehen, um den Entwickler zu unterstützen. Oder unterstütze die Entwicklung mit 0,99 €.</p>
+    <div class="actions">
+      <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Werbung ansehen</a>
+      <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Entwickler mit 0,99 € unterstützen</a>
+    </div>
+    <button id="ohets-reminder-close" class="support-reminder-close" type="button">Schließen</button>
+    <p class="game-status">Die Unterstützung ist freiwillig. Du kannst die Website auch ohne Klick weiter nutzen.</p>
+  </div>
+</div>
+<script>
+(function () {
+  const reminder = document.getElementById("ohets-support-reminder");
+  const close = document.getElementById("ohets-reminder-close");
+  if (!reminder || !close) return;
+  function showReminder() {
+    if (document.hidden || reminder.classList.contains("is-visible")) return;
+    reminder.classList.add("is-visible");
+    reminder.setAttribute("aria-hidden", "false");
+  }
+  function hideReminder() {
+    reminder.classList.remove("is-visible");
+    reminder.setAttribute("aria-hidden", "true");
+  }
+  close.addEventListener("click", hideReminder);
+  reminder.addEventListener("click", function (event) {
+    if (event.target === reminder) hideReminder();
+  });
+  // First reminder after 10 minutes, then repeat every 10 minutes while the page is open.
+  window.setTimeout(function () {
+    showReminder();
+    window.setInterval(showReminder, 10 * 60 * 1000);
+  }, 10 * 60 * 1000);
+})();
+</script>
+
 </body>
 </html>
