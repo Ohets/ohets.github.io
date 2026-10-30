@@ -156,6 +156,14 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 </section>
 <footer><span>© Ohets · Air Simulator</span><span><a href="privacy.html">Privacy Policy</a> · <a href="game.html">Open the game</a></span></footer>
 
+<div id="ohets-game-notice" class="game-notice-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="ohets-game-notice-title" aria-describedby="ohets-game-notice-message" aria-hidden="true">
+  <div class="game-notice">
+    <h2 id="ohets-game-notice-title">Game locked</h2>
+    <p id="ohets-game-notice-message"></p>
+    <button id="ohets-game-notice-close" type="button">OK</button>
+  </div>
+</div>
+
 <script>
 (function () {
   const feedUrl = "https://rss.gamemonetize.com/rssfeed.php?format=json&amount=200&type=html5";
@@ -410,13 +418,6 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     <div class="actions">
       <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
     </div>
-  </div>
-</div>
-<div id="ohets-game-notice" class="game-notice-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="ohets-game-notice-title" aria-describedby="ohets-game-notice-message" aria-hidden="true">
-  <div class="game-notice">
-    <h2 id="ohets-game-notice-title">Game locked</h2>
-    <p id="ohets-game-notice-message"></p>
-    <button id="ohets-game-notice-close" type="button">OK</button>
   </div>
 </div>
 <script>
