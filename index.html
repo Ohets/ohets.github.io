@@ -132,12 +132,12 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   </section>
 <section id="support-ohets" class="card" aria-labelledby="support-title">
   <h2 id="support-title">Support Ohets Games</h2>
-  <p>Werbung ansehen, um den Entwickler zu unterstützen. Oder unterstütze die Entwicklung direkt mit einer kleinen Spende.</p>
+  <p>Watch an ad to support the developer, or support development directly with a small donation.</p>
   <div class="actions">
-    <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Werbung ansehen</a>
-    <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Entwickler mit 0,99 € unterstützen</a>
+    <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Watch Ad</a>
+    <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Support the Developer with €0.99</a>
   </div>
-  <p class="game-status">Die Unterstützung ist freiwillig. Die Website bleibt auch ohne Klick vollständig nutzbar.</p>
+  <p class="game-status">Support is optional. The website remains fully usable without clicking.</p>
 </section>
 <section id="about" class="card">
   <h2>About Air Simulator</h2>
@@ -407,15 +407,15 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 
 <div id="ohets-support-reminder" class="support-reminder-backdrop" role="region" aria-labelledby="ohets-reminder-title" aria-hidden="true">
   <div class="support-reminder">
-    <h2 id="ohets-reminder-title">Unterstütze Ohets Games</h2>
-    <p>Werbung ansehen, um den Entwickler zu unterstützen. Oder unterstütze die Entwicklung mit 0,99 €.</p>
+    <h2 id="ohets-reminder-title">Support Ohets Games</h2>
+    <p>Watch Ad, um den Entwickler zu unterstützen. Or support development with €0.99.</p>
     <div class="actions">
-      <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Werbung ansehen</a>
-      <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Entwickler mit 0,99 € unterstützen</a>
+      <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Watch Ad</a>
+      <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Support the Developer with €0.99</a>
     </div>
     <p id="ohets-ad-timer-status" class="game-status" role="status" aria-live="polite"></p>
     <div class="actions">
-      <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
+      <button class="support-reminder-close" id="ohets-leave-website" type="button">Leave Website</button>
     </div>
   </div>
 </div>
@@ -438,9 +438,9 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       try {
         sessionStorage.setItem(adTimerKey, String(Date.now()));
         adTimerHandled = false;
-        if (timerStatus) timerStatus.textContent = "Zeitmessung gestartet. Kehre nach dem Besuch der Werbung zu dieser Seite zurück.";
+        if (timerStatus) timerStatus.textContent = "Timer started. Return to this page after visiting the advertisement.";
       } catch (_) {
-        if (timerStatus) timerStatus.textContent = "Die Zeitmessung ist in diesem Browser nicht verfügbar.";
+        if (timerStatus) timerStatus.textContent = "The timer is not available in this browser.";
       }
     });
   }
@@ -451,9 +451,9 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       try {
         sessionStorage.setItem(paypalTimerKey, String(Date.now()));
         paypalTimerHandled = false;
-        if (timerStatus) timerStatus.textContent = "30-Sekunden-Zeitmessung gestartet. Kehre danach zu dieser Seite zurück.";
+        if (timerStatus) timerStatus.textContent = "30-second timer started. Return to this page afterwards.";
       } catch (_) {
-        if (timerStatus) timerStatus.textContent = "Die Zeitmessung ist in diesem Browser nicht verfügbar.";
+        if (timerStatus) timerStatus.textContent = "The timer is not available in this browser.";
       }
     });
   }
@@ -476,9 +476,9 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
           reminder.classList.remove("is-visible");
           reminder.setAttribute("aria-hidden", "true");
           try { sessionStorage.removeItem(reminderVisibleKey); } catch (_) {}
-          if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
+          if (timerStatus) timerStatus.textContent = "Timer finished: " + elapsedSeconds + " seconds. The notice has been closed.";
         } else if (timerStatus) {
-          timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 10 Sekunden lag.";
+          timerStatus.textContent = "Timer finished: " + elapsedSeconds + " seconds. The notice remains visible because the time was not more than 10 seconds.";
         }
       }
     }
