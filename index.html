@@ -161,6 +161,10 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   const playerTitle = document.getElementById("game-player-title");
   const closeButton = document.getElementById("game-close");
   const fullscreenButton = document.getElementById("game-fullscreen");
+  const playAdUrl = "https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f";
+  const playTimerKey = "ohets_play_here_started_at";
+  const pendingGameUrlKey = "ohets_play_here_game_url";
+  const pendingGameTitleKey = "ohets_play_here_game_title";
   let games = [{
     title: "Real Airplane Simulator",
     description: "Here is an airplane-driving simulation game. There are many different airplanes to unlock and select in the garage. Following the green arrow and lines, adjust the height instantly. More practice will help you complete all levels.",
@@ -208,6 +212,49 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       return (u.protocol === "https:" || u.protocol === "http:") ? u.href : "";
     } catch (_) { return ""; }
   }
+  function openSelectedGame(url, title) {
+    player.hidden = false;
+    playerTitle.textContent = title;
+    frame.src = url;
+    player.scrollIntoView({behavior: "smooth", block: "start"});
+    status.hidden = false;
+    status.textContent = "Game loaded. If fullscreen does not open automatically, tap the Fullscreen button.";
+  }
+
+  function resumePendingGameAfterAd() {
+    if (document.hidden) return;
+    let startedAt = 0, pendingUrl = "", pendingTitle = "";
+    try {
+      startedAt = Number(sessionStorage.getItem(playTimerKey));
+      pendingUrl = sessionStorage.getItem(pendingGameUrlKey) || "";
+      pendingTitle = sessionStorage.getItem(pendingGameTitleKey) || "";
+    } catch (_) { return; }
+    if (!startedAt || !pendingUrl) return;
+
+    const elapsedMs = Math.max(0, Date.now() - startedAt);
+    try {
+      sessionStorage.removeItem(playTimerKey);
+      sessionStorage.removeItem(pendingGameUrlKey);
+      sessionStorage.removeItem(pendingGameTitleKey);
+    } catch (_) {}
+
+    if (elapsedMs >= 10000) {
+      openSelectedGame(pendingUrl, pendingTitle || "Selected game");
+      status.textContent = "Thanks for visiting! Your game is now loading.";
+    } else {
+      const remaining = Math.ceil((10000 - elapsedMs) / 1000);
+      status.hidden = false;
+      status.textContent = "You returned too soon. Stay on the support page for at least 10 seconds, then tap Play here again. (" + remaining + " seconds were missing.)";
+    }
+  }
+
+  // Also handles a normal page reload after returning from the support link.
+  window.addEventListener("pageshow", resumePendingGameAfterAd);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) resumePendingGameAfterAd();
+  });
+  resumePendingGameAfterAd();
+
   function render() {
     const q = search.value.trim().toLowerCase();
     const c = category.value;
@@ -252,20 +299,18 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       button.addEventListener("click", () => {
         const url = safeUrl(g.url);
         if (!url) { status.hidden = false; status.textContent = "This game has an invalid play URL."; return; }
-        player.hidden = false;
-        playerTitle.textContent = g.title;
-        frame.src = url;
-        player.scrollIntoView({behavior: "smooth", block: "start"});
-        // Fullscreen must be requested directly from the user click; browsers may deny it on some devices.
-        if (frame.requestFullscreen) {
-          frame.requestFullscreen().catch(() => {
-            status.hidden = false;
-            status.textContent = "Game loaded. If fullscreen did not open automatically, tap the Fullscreen button. Your browser may require a direct user action.";
-          });
-        } else {
+        try {
+          sessionStorage.setItem(playTimerKey, String(Date.now()));
+          sessionStorage.setItem(pendingGameUrlKey, url);
+          sessionStorage.setItem(pendingGameTitleKey, g.title);
+        } catch (_) {
           status.hidden = false;
-          status.textContent = "Game loaded. Your browser does not support automatic fullscreen here; try the Fullscreen button or the game's own fullscreen control.";
+          status.textContent = "This browser does not allow the required session storage, so the game cannot be opened through this support step.";
+          return;
         }
+        status.hidden = false;
+        status.textContent = "Opening the support page. Return here after at least 10 seconds and your game will load.";
+        window.location.assign(playAdUrl);
       });
       copy.appendChild(button);
       card.appendChild(copy);
