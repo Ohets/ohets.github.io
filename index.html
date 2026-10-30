@@ -351,6 +351,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   const timerStatus = document.getElementById("ohets-ad-timer-status");
   const adTimerKey = "ohets_ad_timer_started_at";
   const paypalTimerKey = "ohets_paypal_timer_started_at";
+  const reminderVisibleKey = "ohets_support_reminder_visible";
   let adTimerHandled = false;
   let paypalTimerHandled = false;
 
@@ -397,6 +398,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
         if (elapsedMs > 10000) {
           reminder.classList.remove("is-visible");
           reminder.setAttribute("aria-hidden", "true");
+          try { sessionStorage.removeItem(reminderVisibleKey); } catch (_) {}
           if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
         } else if (timerStatus) {
           timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 10 Sekunden lag.";
@@ -444,7 +446,16 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     if (document.hidden) return;
     reminder.classList.add("is-visible");
     reminder.setAttribute("aria-hidden", "false");
+    try { sessionStorage.setItem(reminderVisibleKey, "true"); } catch (_) {}
   }
+
+  // Keep the reminder visible after a page reload in the same tab.
+  try {
+    if (sessionStorage.getItem(reminderVisibleKey) === "true") {
+      reminder.classList.add("is-visible");
+      reminder.setAttribute("aria-hidden", "false");
+    }
+  } catch (_) {}
   // Show the full-screen support notice after 10 minutes and repeat every 10 minutes.
   // Visitors can continue without clicking either support link.
   window.setTimeout(function () {
