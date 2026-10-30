@@ -347,16 +347,19 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   const reminder = document.getElementById("ohets-support-reminder");
   if (!reminder) return;
   const adLink = reminder.querySelector('a[href*="asiafilm.org"]');
+  const paypalLink = reminder.querySelector('a[href*="paypal.com"]');
   const timerStatus = document.getElementById("ohets-ad-timer-status");
-  const timerKey = "ohets_ad_timer_started_at";
-  let timerHandled = false;
+  const adTimerKey = "ohets_ad_timer_started_at";
+  const paypalTimerKey = "ohets_paypal_timer_started_at";
+  let adTimerHandled = false;
+  let paypalTimerHandled = false;
 
   // Start measuring when the visitor opens the advertisement in a new tab.
   if (adLink) {
     adLink.addEventListener("click", function () {
       try {
-        sessionStorage.setItem(timerKey, String(Date.now()));
-        timerHandled = false;
+        sessionStorage.setItem(adTimerKey, String(Date.now()));
+        adTimerHandled = false;
         if (timerStatus) timerStatus.textContent = "Zeitmessung gestartet. Kehre nach dem Besuch der Werbung zu dieser Seite zurück.";
       } catch (_) {
         if (timerStatus) timerStatus.textContent = "Die Zeitmessung ist in diesem Browser nicht verfügbar.";
@@ -364,33 +367,68 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     });
   }
 
-  // Stop only when the visitor returns to this page.
-  function stopAdTimerOnReturn() {
-    if (timerHandled || document.hidden) return;
-    let startedAt;
-    try {
-      startedAt = Number(sessionStorage.getItem(timerKey));
-      if (!startedAt) return;
-      sessionStorage.removeItem(timerKey);
-    } catch (_) {
-      return;
+  // Start a separate 30-second timer when the visitor opens the €0.99 developer-support link.
+  if (paypalLink) {
+    paypalLink.addEventListener("click", function () {
+      try {
+        sessionStorage.setItem(paypalTimerKey, String(Date.now()));
+        paypalTimerHandled = false;
+        if (timerStatus) timerStatus.textContent = "30-Sekunden-Zeitmessung gestartet. Kehre danach zu dieser Seite zurück.";
+      } catch (_) {
+        if (timerStatus) timerStatus.textContent = "Die Zeitmessung ist in diesem Browser nicht verfügbar.";
+      }
+    });
+  }
+
+  // Stop pending timers only when the visitor returns to this page.
+  function stopTimersOnReturn() {
+    if (document.hidden) return;
+
+    if (!adTimerHandled) {
+      let startedAt;
+      try {
+        startedAt = Number(sessionStorage.getItem(adTimerKey));
+        if (startedAt) sessionStorage.removeItem(adTimerKey);
+      } catch (_) {}
+      if (startedAt) {
+        adTimerHandled = true;
+        const elapsedMs = Math.max(0, Date.now() - startedAt);
+        const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
+        if (elapsedMs > 10000) {
+          reminder.classList.remove("is-visible");
+          reminder.setAttribute("aria-hidden", "true");
+          if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
+        } else if (timerStatus) {
+          timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 10 Sekunden lag.";
+        }
+      }
     }
-    timerHandled = true;
-    const elapsedMs = Math.max(0, Date.now() - startedAt);
-    const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
-    if (elapsedMs > 10000) {
-      reminder.classList.remove("is-visible");
-      reminder.setAttribute("aria-hidden", "true");
-      if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
-    } else {
-      if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 10 Sekunden lag.";
+
+    if (!paypalTimerHandled) {
+      let startedAt;
+      try {
+        startedAt = Number(sessionStorage.getItem(paypalTimerKey));
+        if (startedAt) sessionStorage.removeItem(paypalTimerKey);
+      } catch (_) {}
+      if (startedAt) {
+        paypalTimerHandled = true;
+        const elapsedMs = Math.max(0, Date.now() - startedAt);
+        const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
+        if (elapsedMs > 30000) {
+          reminder.classList.remove("is-visible");
+          reminder.setAttribute("aria-hidden", "true");
+          if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
+        } else if (timerStatus) {
+          timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 30 Sekunden lag.";
+        }
+      }
     }
   }
 
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) stopAdTimerOnReturn();
+    if (!document.hidden) stopTimersOnReturn();
   });
-  window.addEventListener("pageshow", stopAdTimerOnReturn);
+  window.addEventListener("pageshow", stopTimersOnReturn);
 
   document.getElementById("ohets-leave-website").addEventListener("click", function () {
     const previous = document.referrer;
