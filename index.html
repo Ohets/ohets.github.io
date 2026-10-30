@@ -413,7 +413,6 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Werbung ansehen</a>
       <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Entwickler mit 0,99 € unterstützen</a>
     </div>
-    <p class="game-status">Die Unterstützung ist freiwillig. Du kannst die Website auch ohne Klick weiter nutzen.</p>
     <p id="ohets-ad-timer-status" class="game-status" role="status" aria-live="polite"></p>
     <div class="actions">
       <button class="support-reminder-close" id="ohets-leave-website" type="button">Website verlassen</button>
@@ -497,9 +496,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
         if (elapsedMs > 30000) {
           reminder.classList.remove("is-visible");
           reminder.setAttribute("aria-hidden", "true");
-          if (timerStatus) timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung wurde geschlossen.";
-        } else if (timerStatus) {
-          timerStatus.textContent = "Zeitmessung beendet: " + elapsedSeconds + " Sekunden. Die Meldung bleibt sichtbar, da die Zeit nicht über 30 Sekunden lag.";
+          try { sessionStorage.removeItem(reminderVisibleKey); } catch (_) {}
         }
       }
     }
