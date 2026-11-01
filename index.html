@@ -70,6 +70,22 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   <div class="brand">OHETS <span>· AIR SIMULATOR</span></div>
   <nav aria-label="Main navigation"><a href="#features">Features</a><a href="#how-to-play">How to play</a><a href="#faq">FAQ</a><a href="privacy.html">Privacy policy</a></nav>
 </header>
+  <section id="more-games" aria-labelledby="more-games-title">
+    <h2 id="more-games-title">More games</h2>
+    <p class="lead">Browse additional HTML5 games. Select a game to try loading it here on the Ohets website.</p>
+    <div class="game-tools">
+      <input id="game-search" type="search" placeholder="Search games…" aria-label="Search games">
+      <select id="game-category" aria-label="Filter by category"><option value="">All categories</option></select>
+    </div>
+    <p id="game-feed-status" class="game-status" role="status">Loading games…</p>
+    <div id="game-feed-grid" class="games-grid"></div>
+    <div id="game-player" class="game-player" hidden>
+      <div class="game-player-head"><h3 id="game-player-title">Selected game</h3><div class="game-tools"><button id="game-fullscreen" type="button">Fullscreen</button><button id="game-close" type="button">Close game</button></div></div>
+      <iframe id="game-frame" title="GameMonetize game player" allow="fullscreen; autoplay; gamepad; accelerometer; gyroscope" allowfullscreen loading="lazy" referrerpolicy="origin"></iframe>
+      <p class="game-status">If the game does not load here, its provider may block embedding. In that case, use the game's own play page.</p>
+    </div>
+  </section>
+
 <section class="hero" aria-labelledby="page-title">
   <div class="eyebrow">Browser-based flight experience</div>
   <h1 id="page-title">Take the controls.<br>Explore the skies.</h1>
@@ -97,21 +113,6 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   </div>
   <p class="lead">For the best experience, use a modern browser and keep the game tab open while playing. Follow any control hints shown in the game interface.</p>
 </section>
-  <section id="more-games" aria-labelledby="more-games-title">
-    <h2 id="more-games-title">More games</h2>
-    <p class="lead">Browse additional HTML5 games. Select a game to try loading it here on the Ohets website.</p>
-    <div class="game-tools">
-      <input id="game-search" type="search" placeholder="Search games…" aria-label="Search games">
-      <select id="game-category" aria-label="Filter by category"><option value="">All categories</option></select>
-    </div>
-    <p id="game-feed-status" class="game-status" role="status">Loading games…</p>
-    <div id="game-feed-grid" class="games-grid"></div>
-    <div id="game-player" class="game-player" hidden>
-      <div class="game-player-head"><h3 id="game-player-title">Selected game</h3><div class="game-tools"><button id="game-fullscreen" type="button">Fullscreen</button><button id="game-close" type="button">Close game</button></div></div>
-      <iframe id="game-frame" title="GameMonetize game player" allow="fullscreen; autoplay; gamepad; accelerometer; gyroscope" allowfullscreen loading="lazy" referrerpolicy="origin"></iframe>
-      <p class="game-status">If the game does not load here, its provider may block embedding. In that case, use the game's own play page.</p>
-    </div>
-  </section>
   <section id="game-video-ad" class="card">
     <h2>Game video</h2>
     <p>Optional video content provided by GameMonetize may appear below.</p>
