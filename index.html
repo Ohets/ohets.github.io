@@ -524,11 +524,23 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     } catch (_) {}
     window.location.assign("https://www.google.com/");
   });
-  function showReminder() {
+  function displayReminder() {
     if (document.hidden) return;
     reminder.classList.add("is-visible");
     reminder.setAttribute("aria-hidden", "false");
     try { sessionStorage.setItem(reminderVisibleKey, "true"); } catch (_) {}
+  }
+
+  function showReminder() {
+    if (document.hidden) return;
+
+    // Exit the game's fullscreen view first so the reminder can appear over the page.
+    if (document.fullscreenElement && typeof document.exitFullscreen === "function") {
+      document.exitFullscreen().then(displayReminder).catch(displayReminder);
+      return;
+    }
+
+    displayReminder();
   }
 
   // Keep the reminder visible after a page reload in the same tab.
