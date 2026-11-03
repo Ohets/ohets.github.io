@@ -27,8 +27,40 @@
 .authSwitch button{flex:1}
 
 </style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5748504816827122" crossorigin="anonymous"></script>
+/* Cookie consent banner */
+#ohets-cookie-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:20000;max-width:760px;margin:0 auto;padding:20px;border:1px solid #4b7188;border-radius:16px;background:#0b1d2c;color:#f2f8fc;box-shadow:0 12px 40px #000b;font:14px/1.55 system-ui,sans-serif}
+#ohets-cookie-banner h2{margin:0 0 8px;font-size:19px;color:#fff}
+#ohets-cookie-banner p{margin:0 0 14px;color:#d0dce5}
+#ohets-cookie-banner .cookie-actions{display:flex;gap:10px;flex-wrap:wrap}
+#ohets-cookie-banner button{min-height:44px;padding:10px 16px;border-radius:9px;border:1px solid #73e2ff;font-weight:800;cursor:pointer}
+#ohets-cookie-accept{background:#73e2ff;color:#042033}
+#ohets-cookie-necessary{background:transparent;color:#f2f8fc}
+@media(max-width:520px){#ohets-cookie-banner{left:10px;right:10px;bottom:10px;padding:16px}#ohets-cookie-banner .cookie-actions{flex-direction:column}#ohets-cookie-banner button{width:100%}}
+
+<script type="text/plain" id="ohets-adsense-consent" data-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5748504816827122" crossorigin="anonymous"></script>
+<script>
+(function(){
+  function loadAdSense(){
+    if(document.getElementById('ohets-adsense-loaded'))return;
+    const s=document.createElement('script');s.id='ohets-adsense-loaded';s.async=true;
+    s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5748504816827122';
+    s.crossOrigin='anonymous';document.head.appendChild(s);
+  }
+  if(localStorage.getItem('ohets_cookie_choice_v1')==='all')loadAdSense();
+  window.addEventListener('ohets-cookie-choice',e=>{if(e.detail?.choice==='all')loadAdSense();});
+})();
+</script>
 </head>
+
+<div id="ohets-cookie-banner" role="dialog" aria-modal="true" aria-labelledby="ohets-cookie-title" hidden>
+  <h2 id="ohets-cookie-title">Your privacy choices</h2>
+  <p>We use necessary storage to make this website work. With your permission, we also load third-party games and advertising content from providers such as GameMonetize and Google. These providers may process information such as your IP address or use cookies and similar technologies. You can accept all or continue with necessary cookies only. Read our <a href="privacy.html">Privacy Policy</a>.</p>
+  <div class="cookie-actions">
+    <button id="ohets-cookie-accept" type="button">Accept all</button>
+    <button id="ohets-cookie-necessary" type="button">Use necessary cookies only</button>
+  </div>
+</div>
+
 <body>
 
 <div id="hud">
@@ -897,4 +929,25 @@ function startFlightAudio(){if(audioCtx){if(audioCtx.state==='suspended')audioCt
 function sceneryUnlocked(city){if(city==='New York')return completedMissions.has(21)||purchasedSceneries.has(city);return purchasedSceneries.has(city);}function updateSceneryButtons(){const items=[['New York','startNewYorkBtn',10000,'🗽 NEW YORK'],['Los Angeles','startLosAngelesBtn',20000,'🌴 LOS ANGELES'],['San Francisco','startSanFranciscoBtn',30000,'🌉 SAN FRANCISCO']];for(const [city,id,cost,label] of items){const b=$(id);if(!b)continue;const unlocked=sceneryUnlocked(city);b.textContent=unlocked?label+' · FREIGESCHALTET':label+' · 🔒 '+cost.toLocaleString('de-AT')+' CREDITS'+(city==='New York'?' OR MISSION 22':'');b.style.opacity=unlocked?'1':'.82';}}function chooseScenery(city,cost){if(sceneryUnlocked(city)){startAtScenery(city);return;}const reason=city==='New York'?'Complete Mission 22 or purchase New York for '+cost.toLocaleString('de-AT')+' credits to unlock.':'Unlock '+city+' for '+cost.toLocaleString('de-AT')+' credits to unlock.';if(credits<cost){alert(reason+' You currently have '+credits.toLocaleString('de-AT')+' credits.');return;}if(!confirm(city+' for '+cost.toLocaleString('de-AT')+' credits permanently?'))return;credits-=cost;purchasedSceneries.add(city);save();ui();updateSceneryButtons();startAtScenery(city);}function startAtScenery(city){if(!sceneryUnlocked(city)){updateSceneryButtons();alert(city==='New York'?'New York is locked. Complete Mission 22 or purchase the scenery for 10,000 credits.':'This scenery is locked. Purchase it with credits first.');return;}startFlightAudio();if(activeMission>=0){activeMission=-1;missionFailed=false;}if(onFoot)setOnFootMode(false);planeGroup.visible=true;gear=true;resetFlight();heading=0;speed=0;altitude=0;steerX=0;steerY=0;rollAngle=0;pitchAngle=0;setNightMode(false);setStormMode(false);if(missionMarker){scene.remove(missionMarker);missionMarker=null;missionMarkerRing=null;}if(city==='New York'){planeGroup.position.set(-850,-13.3,-13490);$('status').textContent='NEW YORK · READY TO FLY';}else if(city==='Los Angeles'){planeGroup.position.set(1940,-13.3,-34720);$('status').textContent='LOS ANGELES · READY TO FLY';}else if(city==='San Francisco'){planeGroup.position.set(-2200,-13.3,-53550);$('status').textContent='SAN FRANCISCO · READY TO FLY';}missionPhase='outbound';$('gearBtn').textContent='▱ LANDING GEAR: AUS';$('startOverlay').classList.remove('show');paused=false;ui();} $('startBtn').onclick=()=>{startFlightAudio();$('startOverlay').classList.remove('show');paused=false};$('startNewYorkBtn').onclick=()=>chooseScenery('New York',10000);$('startLosAngelesBtn').onclick=()=>chooseScenery('Los Angeles',20000);$('startSanFranciscoBtn').onclick=()=>chooseScenery('San Francisco',30000);$('startHangarBtn').onclick=()=>{startFlightAudio();$('startOverlay').classList.remove('show');openHangar()};
 ui();renderHangar();updateSceneryButtons();
 </script>
+
+<script>
+(function(){
+  const KEY='ohets_cookie_choice_v1';
+  const banner=document.getElementById('ohets-cookie-banner');
+  function choice(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
+  function show(){if(banner)banner.hidden=false;}
+  function hide(){if(banner)banner.hidden=true;}
+  function save(value){
+    try{localStorage.setItem(KEY,value);}catch(e){}
+    hide();
+    window.dispatchEvent(new CustomEvent('ohets-cookie-choice',{detail:{choice:value}}));
+    if(value==='all')window.location.reload();
+  }
+  window.OhetsCookieConsent={getChoice:choice,hasOptionalConsent:()=>choice()==='all',show};
+  if(!choice())show();
+  document.getElementById('ohets-cookie-accept').addEventListener('click',()=>save('all'));
+  document.getElementById('ohets-cookie-necessary').addEventListener('click',()=>save('necessary'));
+})();
+</script>
+
 </body></html>
