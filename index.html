@@ -63,7 +63,27 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 .game-notice button{border:0;border-radius:10px;padding:11px 20px;background:var(--accent);color:#042033;font-weight:800;cursor:pointer}
 
 </style>
+/* Cookie consent banner */
+#ohets-cookie-banner{position:fixed;left:16px;right:16px;bottom:16px;z-index:20000;max-width:760px;margin:0 auto;padding:20px;border:1px solid #4b7188;border-radius:16px;background:#0b1d2c;color:#f2f8fc;box-shadow:0 12px 40px #000b;font:14px/1.55 system-ui,sans-serif}
+#ohets-cookie-banner h2{margin:0 0 8px;font-size:19px;color:#fff}
+#ohets-cookie-banner p{margin:0 0 14px;color:#d0dce5}
+#ohets-cookie-banner .cookie-actions{display:flex;gap:10px;flex-wrap:wrap}
+#ohets-cookie-banner button{min-height:44px;padding:10px 16px;border-radius:9px;border:1px solid #73e2ff;font-weight:800;cursor:pointer}
+#ohets-cookie-accept{background:#73e2ff;color:#042033}
+#ohets-cookie-necessary{background:transparent;color:#f2f8fc}
+@media(max-width:520px){#ohets-cookie-banner{left:10px;right:10px;bottom:10px;padding:16px}#ohets-cookie-banner .cookie-actions{flex-direction:column}#ohets-cookie-banner button{width:100%}}
+
 </head>
+
+<div id="ohets-cookie-banner" role="dialog" aria-modal="true" aria-labelledby="ohets-cookie-title" hidden>
+  <h2 id="ohets-cookie-title">Your privacy choices</h2>
+  <p>We use necessary storage to make this website work. With your permission, we also load third-party games and advertising content from providers such as GameMonetize and Google. These providers may process information such as your IP address or use cookies and similar technologies. You can accept all or continue with necessary cookies only. Read our <a href="privacy.html">Privacy Policy</a>.</p>
+  <div class="cookie-actions">
+    <button id="ohets-cookie-accept" type="button">Accept all</button>
+    <button id="ohets-cookie-necessary" type="button">Use necessary cookies only</button>
+  </div>
+</div>
+
 <body>
 <main>
 <header>
@@ -117,19 +137,19 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     <h2>Game video</h2>
     <p>Optional video content provided by GameMonetize may appear below.</p>
     <div id="gamemonetize-video" style="width:100%;min-height:240px;overflow:hidden;border-radius:12px"></div>
-    <script type="text/javascript">
-       window.VIDEO_OPTIONS = {
-           gameid : "op80fpm9qz2r91kjhwsjb5vwttnxrgx2",
-           width  : "100%",
-           height : "480px",
-           color  : "#3f007e",
-           getAds : "true"
-       };
-       (function (a, b, c) {
-          var d = a.getElementsByTagName(b)[0];
-          a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/video.js?v=" + Date.now(), d.parentNode.insertBefore(a, d))
-       })(document, "script", "gamemonetize-video-api");
-    </script>
+    <script type="text/plain" id="gamemonetize-video-consent">
+window.VIDEO_OPTIONS = {
+  gameid : "op80fpm9qz2r91kjhwsjb5vwttnxrgx2",
+  width  : "100%",
+  height : "480px",
+  color  : "#3f007e",
+  getAds : "true"
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/video.js?v=" + Date.now(), d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-video-api");
+</script>
   </section>
 <section id="support-ohets" class="card" aria-labelledby="support-title">
   <h2 id="support-title">Support Ohets Games</h2>
@@ -251,6 +271,11 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   document.getElementById("ohets-game-notice-close").addEventListener("click", closeGameNotice);
 
   function openSelectedGame(url, title) {
+    if (!window.OhetsCookieConsent || !window.OhetsCookieConsent.hasOptionalConsent()) {
+      showGameNotice("Please choose 'Accept all' in the privacy banner before loading third-party games.");
+      if (window.OhetsCookieConsent) window.OhetsCookieConsent.show();
+      return;
+    }
     closeGameNotice();
     player.hidden = false;
     playerTitle.textContent = title;
@@ -375,38 +400,65 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   search.addEventListener("input", render);
   category.addEventListener("change", render);
 
-  fetch(feedUrl)
-    .then(response => {
-      if (!response.ok) throw new Error("Feed request failed (" + response.status + ")");
-      return response.text();
-    })
-    .then(body => {
-      let parsed;
-      try { parsed = normalize(JSON.parse(body)); }
-      catch (_) { parsed = normalize(parseXml(body)); }
-      if (!parsed.length) throw new Error("The feed returned no readable games.");
-      const featured = games;
-      const knownUrls = new Set(featured.map(g => safeUrl(g.url)));
-      games = featured.concat(parsed.filter(g => !knownUrls.has(safeUrl(g.url))));
-      const categories = Array.from(new Set(games.map(g => g.category))).sort((a,b) => a.localeCompare(b));
-      categories.forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        category.appendChild(option);
-      });
-      render();
-    })
-    .catch(() => {
-      if (games.length) {
+  function loadGameFeed() {
+    fetch(feedUrl)
+      .then(response => {
+        if (!response.ok) throw new Error("Feed request failed (" + response.status + ")");
+        return response.text();
+      })
+      .then(body => {
+        let parsed;
+        try { parsed = normalize(JSON.parse(body)); }
+        catch (_) { parsed = normalize(parseXml(body)); }
+        if (!parsed.length) throw new Error("The feed returned no readable games.");
+        const featured = games;
+        const knownUrls = new Set(featured.map(g => safeUrl(g.url)));
+        games = featured.concat(parsed.filter(g => !knownUrls.has(safeUrl(g.url))));
+        const categories = Array.from(new Set(games.map(g => g.category))).sort((a,b) => a.localeCompare(b));
+        categories.forEach(name => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          category.appendChild(option);
+        });
         render();
-        status.hidden = false;
-        status.textContent = "Showing featured games. More games could not be loaded automatically right now.";
-      } else {
-        status.hidden = false;
-        status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
+      })
+      .catch(() => {
+        if (games.length) {
+          render();
+          status.hidden = false;
+          status.textContent = "Showing featured games. More games could not be loaded automatically right now.";
+        } else {
+          status.hidden = false;
+          status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
+        }
+      });
+  }
+  if (window.OhetsCookieConsent && window.OhetsCookieConsent.hasOptionalConsent()) {
+    loadGameFeed();
+  } else {
+    status.hidden = false;
+    status.textContent = "Choose 'Accept all' to load third-party games and advertising content. You can still read this page with necessary cookies only.";
+  }
+  window.addEventListener("ohets-cookie-choice", function(event) {
+    if (event.detail && event.detail.choice === "all") {
+      loadGameFeed();
+      const inert=document.getElementById("gamemonetize-video-consent");
+      if(inert && !document.getElementById("gamemonetize-video-api")){
+        const active=document.createElement("script");
+        active.textContent=inert.textContent;
+        inert.parentNode.replaceChild(active,inert);
       }
-    });
+    }
+  });
+  if (window.OhetsCookieConsent && window.OhetsCookieConsent.hasOptionalConsent()) {
+    const inert=document.getElementById("gamemonetize-video-consent");
+    if(inert){
+      const active=document.createElement("script");
+      active.textContent=inert.textContent;
+      inert.parentNode.replaceChild(active,inert);
+    }
+  }
 })();
 </script>
 
@@ -569,6 +621,27 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
   }
 
   scheduleNextReminder();
+})();
+</script>
+
+
+<script>
+(function(){
+  const KEY='ohets_cookie_choice_v1';
+  const banner=document.getElementById('ohets-cookie-banner');
+  function choice(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
+  function show(){if(banner)banner.hidden=false;}
+  function hide(){if(banner)banner.hidden=true;}
+  function save(value){
+    try{localStorage.setItem(KEY,value);}catch(e){}
+    hide();
+    window.dispatchEvent(new CustomEvent('ohets-cookie-choice',{detail:{choice:value}}));
+    if(value==='all')window.location.reload();
+  }
+  window.OhetsCookieConsent={getChoice:choice,hasOptionalConsent:()=>choice()==='all',show};
+  if(!choice())show();
+  document.getElementById('ohets-cookie-accept').addEventListener('click',()=>save('all'));
+  document.getElementById('ohets-cookie-necessary').addEventListener('click',()=>save('necessary'));
 })();
 </script>
 
