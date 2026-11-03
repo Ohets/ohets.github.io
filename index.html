@@ -550,12 +550,21 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       reminder.setAttribute("aria-hidden", "false");
     }
   } catch (_) {}
-  // Show the full-screen support notice after 10 minutes and repeat every 10 minutes.
+  // Show the full-screen support notice at a randomly selected interval.
+  // Each interval is independently chosen: 10, 15 or 20 minutes.
   // Visitors can continue without clicking either support link.
-  window.setTimeout(function () {
-    showReminder();
-    window.setInterval(showReminder, 10 * 60 * 1000);
-  }, 10 * 60 * 1000);
+  function scheduleNextReminder() {
+    const intervalsInMinutes = [10, 15, 20];
+    const randomIndex = Math.floor(Math.random() * intervalsInMinutes.length);
+    const delay = intervalsInMinutes[randomIndex] * 60 * 1000;
+
+    window.setTimeout(function () {
+      showReminder();
+      scheduleNextReminder();
+    }, delay);
+  }
+
+  scheduleNextReminder();
 })();
 </script>
 
