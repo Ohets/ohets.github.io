@@ -85,6 +85,26 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 </div>
 
 <body>
+<script>
+(function(){
+  const KEY='ohets_cookie_choice_v1';
+  const banner=document.getElementById('ohets-cookie-banner');
+  function choice(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
+  function show(){if(banner)banner.hidden=false;}
+  function hide(){if(banner)banner.hidden=true;}
+  function save(value){
+    try{localStorage.setItem(KEY,value);}catch(e){}
+    hide();
+    window.dispatchEvent(new CustomEvent('ohets-cookie-choice',{detail:{choice:value}}));
+    if(value==='all')window.location.reload();
+  }
+  window.OhetsCookieConsent={getChoice:choice,hasOptionalConsent:()=>choice()==='all',show};
+  if(!choice())show();
+  document.getElementById('ohets-cookie-accept').addEventListener('click',()=>save('all'));
+  document.getElementById('ohets-cookie-necessary').addEventListener('click',()=>save('necessary'));
+})();
+</script>
+
 <main>
 <header>
   <div class="brand">OHETS <span>· GAMES</span></div>
@@ -625,25 +645,7 @@ window.VIDEO_OPTIONS = {
 </script>
 
 
-<script>
-(function(){
-  const KEY='ohets_cookie_choice_v1';
-  const banner=document.getElementById('ohets-cookie-banner');
-  function choice(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
-  function show(){if(banner)banner.hidden=false;}
-  function hide(){if(banner)banner.hidden=true;}
-  function save(value){
-    try{localStorage.setItem(KEY,value);}catch(e){}
-    hide();
-    window.dispatchEvent(new CustomEvent('ohets-cookie-choice',{detail:{choice:value}}));
-    if(value==='all')window.location.reload();
-  }
-  window.OhetsCookieConsent={getChoice:choice,hasOptionalConsent:()=>choice()==='all',show};
-  if(!choice())show();
-  document.getElementById('ohets-cookie-accept').addEventListener('click',()=>save('all'));
-  document.getElementById('ohets-cookie-necessary').addEventListener('click',()=>save('necessary'));
-})();
-</script>
+
 
 </body>
 </html>
