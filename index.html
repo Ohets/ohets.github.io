@@ -550,13 +550,17 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
       reminder.setAttribute("aria-hidden", "false");
     }
   } catch (_) {}
-  // Show the full-screen support notice at a randomly selected interval.
-  // Each interval is independently chosen: 10, 15 or 20 minutes.
+  // Show the full-screen support notice after a newly randomized interval.
+  // The interval is a random whole number of seconds between 10 and 25 minutes,
+  // so the reminder can appear at times such as 13:15, 17:30 or 23:10.
   // Visitors can continue without clicking either support link.
   function scheduleNextReminder() {
-    const intervalsInMinutes = [10, 15, 20];
-    const randomIndex = Math.floor(Math.random() * intervalsInMinutes.length);
-    const delay = intervalsInMinutes[randomIndex] * 60 * 1000;
+    const minimumSeconds = 10 * 60;
+    const maximumSeconds = 25 * 60;
+    const randomSeconds = Math.floor(
+      Math.random() * (maximumSeconds - minimumSeconds + 1)
+    ) + minimumSeconds;
+    const delay = randomSeconds * 1000;
 
     window.setTimeout(function () {
       showReminder();
