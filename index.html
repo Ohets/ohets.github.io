@@ -228,6 +228,38 @@ window.VIDEO_OPTIONS = {
 <script>
 (function () {
   const feedUrl = "https://rss.gamemonetize.com/rssfeed.php?format=json&amount=200&type=html5";
+  // Keep a few games available if the remote feed is temporarily unavailable.
+  let games = [
+    {title:"Real Airplane Simulator",description:"Fly different aircraft and complete flight challenges.",url:"https://html5.gamemonetize.com/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/",thumb:"https://img.gamemonetize.com/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/512x384.jpg",category:"Action"},
+    {title:"Bus Simulator Game 2026",description:"Drive a bus across bumpy off-road tracks and hills.",url:"https://html5.gamemonetize.com/op80fpm9qz2r91kjhwsjb5vwttnxrgx2/",thumb:"https://img.gamemonetize.com/op80fpm9qz2r91kjhwsjb5vwttnxrgx2/512x384.jpg",category:"Racing"}
+  ];
+  function safeUrl(value) {
+    try { const u = new URL(value); return (u.protocol === "https:" || u.protocol === "http:") ? u.href : ""; }
+    catch (_) { return ""; }
+  }
+  function normalize(raw) {
+    const list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.games) ? raw.games : (raw && Array.isArray(raw.data) ? raw.data : []));
+    return list.map(g => ({
+      title: String(g.title || g.name || g.game_name || "").trim(),
+      description: String(g.description || g.desc || "").trim(),
+      url: safeUrl(g.url || g.game_url || g.play_url || ""),
+      thumb: safeUrl(g.thumb || g.thumbnail || g.thumbnail_url || g.image || ""),
+      category: String(g.category || g.genre || "Other").trim() || "Other"
+    })).filter(g => g.title && g.url);
+  }
+  function parseXml(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (doc.querySelector("parsererror")) return [];
+    return Array.from(doc.querySelectorAll("item, game")).map(node => {
+      const g = {};
+      Array.from(node.children).forEach(el => g[el.tagName.toLowerCase()] = el.textContent.trim());
+      return g;
+    });
+  }
+  function closeGameNotice() {
+    const notice = document.getElementById("ohets-game-notice");
+    if (notice) { notice.setAttribute("aria-hidden", "true"); notice.style.display = "none"; }
+  }
   const grid = document.getElementById("game-feed-grid");
   const status = document.getElementById("game-feed-status");
   const search = document.getElementById("game-search");
