@@ -394,7 +394,7 @@ fetch(feedUrl)
     </div>
     <p id="ohets-ad-timer-status" class="game-status" role="status" aria-live="polite"></p>
     <div class="actions">
-      <button class="support-reminder-close" id="ohets-leave-website" type="button">Leave Website</button>
+      <button class="support-reminder-close" id="ohets-continue-playing" type="button">Continue playing without donating</button>
     </div>
   </div>
 </div>
@@ -449,15 +449,10 @@ fetch(feedUrl)
   });
   window.addEventListener("pageshow", stopTimersOnReturn);
 
-  document.getElementById("ohets-leave-website").addEventListener("click", function () {
-    const previous = document.referrer;
-    try {
-      if (previous && new URL(previous).origin !== window.location.origin) {
-        window.location.assign(previous);
-        return;
-      }
-    } catch (_) {}
-    window.location.assign("https://www.google.com/");
+  document.getElementById("ohets-continue-playing").addEventListener("click", function () {
+    reminder.classList.remove("is-visible");
+    reminder.setAttribute("aria-hidden", "true");
+    try { sessionStorage.removeItem(reminderVisibleKey); } catch (_) {}
   });
   function displayReminder() {
     if (document.hidden) return;
