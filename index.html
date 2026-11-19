@@ -238,79 +238,6 @@ window.VIDEO_OPTIONS = {
   const playerTitle = document.getElementById("game-player-title");
   const closeButton = document.getElementById("game-close");
   const fullscreenButton = document.getElementById("game-fullscreen");
-  const playAdUrl = "https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f";
-  const playTimerKey = "ohets_play_here_started_at";
-  const pendingGameUrlKey = "ohets_play_here_game_url";
-  const pendingGameTitleKey = "ohets_play_here_game_title";
-  let games = [{
-    title: "Holecraft.io",
-    description: "Enter a chaotic block-eating adventure. Control a hungry black hole, swallow blocks and structures, grow larger and collect as much as possible before time runs out.",
-    url: "https://html5.gamemonetize.co/qzsu1s01rjo5hcm1jznanjq8hed94fyo/",
-    thumb: "https://img.gamemonetize.com/qzsu1s01rjo5hcm1jznanjq8hed94fyo/512x384.jpg",
-    category: "Hypercasual"
-  }, {
-    title: "Real Airplane Simulator",
-    description: "Here is an airplane-driving simulation game. There are many different airplanes to unlock and select in the garage. Following the green arrow and lines, adjust the height instantly. More practice will help you complete all levels.",
-    url: "https://html5.gamemonetize.co/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/",
-    thumb: "https://img.gamemonetize.com/l2mrm0gwkvuj1g0qy0acw6fj7xnzxmas/512x384.jpg",
-    category: "Action"
-  }, {
-    title: "Bus Simulator Game 2026",
-    description: "Drive a bus across bumpy off-road tracks, hills and rocky paths. Steer carefully and complete each level.",
-    url: "https://html5.gamemonetize.co/op80fpm9qz2r91kjhwsjb5vwttnxrgx2/",
-    thumb: "https://img.gamemonetize.com/op80fpm9qz2r91kjhwsjb5vwttnxrgx2/512x384.jpg",
-    category: "Racing"
-  }];
-
-  function textValue(obj, keys) {
-    for (const key of keys) {
-      if (obj && obj[key] != null && String(obj[key]).trim()) return String(obj[key]).trim();
-    }
-    return "";
-  }
-  function parseXml(xmlText) {
-    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-    if (doc.querySelector("parsererror")) return [];
-    return Array.from(doc.querySelectorAll("game, item")).map(node => {
-      const item = {};
-      Array.from(node.children).forEach(child => item[child.tagName.toLowerCase()] = child.textContent.trim());
-      return item;
-    });
-  }
-  function normalize(raw) {
-    const list = Array.isArray(raw) ? raw :
-      (raw && Array.isArray(raw.games) ? raw.games :
-      (raw && Array.isArray(raw.data) ? raw.data : []));
-    return list.map(g => ({
-      title: textValue(g, ["title", "name", "game_name"]),
-      description: textValue(g, ["description", "desc"]),
-      url: textValue(g, ["url", "game_url", "play_url", "gameUrl"]),
-      thumb: textValue(g, ["thumb", "thumbnail", "thumbnail_url", "image", "image_url"]),
-      category: textValue(g, ["category", "genre", "type"]) || "Other"
-    })).filter(g => g.title && g.url);
-  }
-  function safeUrl(value) {
-    try {
-      const u = new URL(value);
-      return (u.protocol === "https:" || u.protocol === "http:") ? u.href : "";
-    } catch (_) { return ""; }
-  }
-  const gameNotice = document.getElementById("ohets-game-notice");
-  const gameNoticeMessage = document.getElementById("ohets-game-notice-message");
-  function showGameNotice(message) {
-    if (!gameNotice || !gameNoticeMessage) return;
-    gameNoticeMessage.textContent = message;
-    gameNotice.classList.add("is-visible");
-    gameNotice.setAttribute("aria-hidden", "false");
-    document.getElementById("ohets-game-notice-close").focus();
-  }
-  function closeGameNotice() {
-    if (!gameNotice) return;
-    gameNotice.classList.remove("is-visible");
-    gameNotice.setAttribute("aria-hidden", "true");
-  }
-  document.getElementById("ohets-game-notice-close").addEventListener("click", closeGameNotice);
-
   function openSelectedGame(url, title) {
     closeGameNotice();
     player.hidden = false;
@@ -320,41 +247,6 @@ window.VIDEO_OPTIONS = {
     status.hidden = false;
     status.textContent = "Game loaded. If fullscreen does not open automatically, tap the Fullscreen button.";
   }
-
-  function resumePendingGameAfterAd() {
-    if (document.hidden) return;
-    let startedAt = 0, pendingUrl = "", pendingTitle = "";
-    try {
-      startedAt = Number(sessionStorage.getItem(playTimerKey));
-      pendingUrl = sessionStorage.getItem(pendingGameUrlKey) || "";
-      pendingTitle = sessionStorage.getItem(pendingGameTitleKey) || "";
-    } catch (_) { return; }
-    if (!startedAt || !pendingUrl) return;
-
-    const elapsedMs = Math.max(0, Date.now() - startedAt);
-    try {
-      sessionStorage.removeItem(playTimerKey);
-      sessionStorage.removeItem(pendingGameUrlKey);
-      sessionStorage.removeItem(pendingGameTitleKey);
-    } catch (_) {}
-
-    if (elapsedMs >= 10000) {
-      openSelectedGame(pendingUrl, pendingTitle || "Selected game");
-      status.textContent = "Thanks for visiting! Your game is now loading.";
-    } else {
-      const remaining = Math.ceil((10000 - elapsedMs) / 1000);
-      status.hidden = false;
-      status.textContent = "Please watch the advertisement for at least 10 seconds to unlock the game. (" + remaining + " seconds remaining.)";
-      showGameNotice(status.textContent);
-    }
-  }
-
-  // Also handles a normal page reload after returning from the support link.
-  window.addEventListener("pageshow", resumePendingGameAfterAd);
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) resumePendingGameAfterAd();
-  });
-  resumePendingGameAfterAd();
 
   function render() {
     const q = search.value.trim().toLowerCase();
@@ -400,18 +292,7 @@ window.VIDEO_OPTIONS = {
       button.addEventListener("click", () => {
         const url = safeUrl(g.url);
         if (!url) { status.hidden = false; status.textContent = "This game has an invalid play URL."; return; }
-        try {
-          sessionStorage.setItem(playTimerKey, String(Date.now()));
-          sessionStorage.setItem(pendingGameUrlKey, url);
-          sessionStorage.setItem(pendingGameTitleKey, g.title);
-        } catch (_) {
-          status.hidden = false;
-          status.textContent = "This browser does not allow the required session storage, so the game cannot be opened through this support step.";
-          return;
-        }
-        status.hidden = false;
-        status.textContent = "Opening the support page. Return here after at least 10 seconds and your game will load.";
-        window.location.assign(playAdUrl);
+        openSelectedGame(url, g.title);
       });
       copy.appendChild(button);
       card.appendChild(copy);
@@ -476,9 +357,8 @@ fetch(feedUrl)
 <div id="ohets-support-reminder" class="support-reminder-backdrop" role="region" aria-labelledby="ohets-reminder-title" aria-hidden="true">
   <div class="support-reminder">
     <h2 id="ohets-reminder-title">Support Ohets Games</h2>
-    <p>Watch an ad to support the developer, or support development with a €0.99 donation.</p>
+    <p>Ohets Games is free to use. You can support development with a voluntary €0.99 donation.</p>
     <div class="actions">
-      <a class="button primary" href="https://asiafilm.org/4/c35ee53c52adcbd05bbe331292c6729f" target="_blank" rel="noopener noreferrer">Watch Ad</a>
       <a class="button secondary" href="https://www.paypal.com/donate/?hosted_button_id=HF3HYZ9J3QV4U" target="_blank" rel="noopener noreferrer">Support the Developer with €0.99</a>
     </div>
     <p id="ohets-ad-timer-status" class="game-status" role="status" aria-live="polite"></p>
@@ -491,27 +371,11 @@ fetch(feedUrl)
 (function () {
   const reminder = document.getElementById("ohets-support-reminder");
   if (!reminder) return;
-  const adLink = reminder.querySelector('a[href*="asiafilm.org"]');
   const paypalLink = reminder.querySelector('a[href*="paypal.com"]');
   const timerStatus = document.getElementById("ohets-ad-timer-status");
-  const adTimerKey = "ohets_ad_timer_started_at";
   const paypalTimerKey = "ohets_paypal_timer_started_at";
   const reminderVisibleKey = "ohets_support_reminder_visible";
-  let adTimerHandled = false;
   let paypalTimerHandled = false;
-
-  // Start measuring when the visitor opens the advertisement in a new tab.
-  if (adLink) {
-    adLink.addEventListener("click", function () {
-      try {
-        sessionStorage.setItem(adTimerKey, String(Date.now()));
-        adTimerHandled = false;
-        if (timerStatus) timerStatus.textContent = "Timer started. Return to this page after visiting the advertisement.";
-      } catch (_) {
-        if (timerStatus) timerStatus.textContent = "The timer is not available in this browser.";
-      }
-    });
-  }
 
   // Start a separate 30-second timer when the visitor opens the €0.99 developer-support link.
   if (paypalLink) {
@@ -526,30 +390,9 @@ fetch(feedUrl)
     });
   }
 
-  // Stop pending timers only when the visitor returns to this page.
+  // Stop the voluntary donation timer only when the visitor returns to this page.
   function stopTimersOnReturn() {
     if (document.hidden) return;
-
-    if (!adTimerHandled) {
-      let startedAt;
-      try {
-        startedAt = Number(sessionStorage.getItem(adTimerKey));
-        if (startedAt) sessionStorage.removeItem(adTimerKey);
-      } catch (_) {}
-      if (startedAt) {
-        adTimerHandled = true;
-        const elapsedMs = Math.max(0, Date.now() - startedAt);
-        const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
-        if (elapsedMs > 10000) {
-          reminder.classList.remove("is-visible");
-          reminder.setAttribute("aria-hidden", "true");
-          try { sessionStorage.removeItem(reminderVisibleKey); } catch (_) {}
-          if (timerStatus) timerStatus.textContent = "Timer finished: " + elapsedSeconds + " seconds. The notice has been closed.";
-        } else if (timerStatus) {
-          timerStatus.textContent = "Timer finished: " + elapsedSeconds + " seconds. The notice remains visible because the time was not more than 10 seconds.";
-        }
-      }
-    }
 
     if (!paypalTimerHandled) {
       let startedAt;
@@ -614,7 +457,7 @@ fetch(feedUrl)
   // Show the full-screen support notice after a newly randomized interval.
   // The interval is a random whole number of seconds between 10 and 25 minutes,
   // so the reminder can appear at times such as 13:15, 17:30 or 23:10.
-  // Visitors can continue without clicking either support link.
+  // Visitors can continue playing; the donation is optional.
   function scheduleNextReminder() {
     const minimumSeconds = 10 * 60;
     const maximumSeconds = 25 * 60;
