@@ -416,7 +416,7 @@ fetch(feedUrl)
       try {
         sessionStorage.setItem(paypalTimerKey, String(Date.now()));
         paypalTimerHandled = false;
-        if (timerStatus) timerStatus.textContent = "30-second timer started. Return to this page afterwards.";
+
       } catch (_) {
         if (timerStatus) timerStatus.textContent = "The timer is not available in this browser.";
       }
