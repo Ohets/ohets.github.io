@@ -61,6 +61,20 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
 .support-reminder .actions{margin-top:22px;justify-content:center}
 .support-reminder-close{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:transparent;color:var(--text);font:inherit;cursor:pointer}
 
+
+/* GameMonetize cookie consent */
+.cookie-consent-backdrop{position:fixed;inset:0;z-index:10020;display:none;align-items:flex-end;justify-content:center;padding:18px;background:#02091499}
+.cookie-consent-backdrop.is-visible{display:flex}
+.cookie-consent{width:min(100%,760px);padding:22px;border:1px solid var(--line);border-radius:18px;background:#10283a;color:var(--text);box-shadow:0 18px 60px #000b}
+.cookie-consent h2{margin:0 0 8px;font-size:1.35rem}
+.cookie-consent p{margin:0;color:var(--muted)}
+.cookie-consent .actions{margin-top:16px}
+.cookie-consent .button{cursor:pointer;font:inherit}
+.cookie-consent .primary{background:var(--accent);color:#042033}
+.cookie-consent .secondary{background:transparent;color:var(--text)}
+.cookie-settings-link{border:0;background:none;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+@media(max-width:520px){.cookie-consent-backdrop{padding:10px}.cookie-consent .actions{flex-direction:column}.cookie-consent .button{width:100%}}
+
 /* Foreground notice for the Play here unlock message */
 .game-notice-backdrop{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:20px;background:#020914eF}
 .game-notice-backdrop.is-visible{display:flex}
@@ -180,19 +194,7 @@ footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display
     <h2>Game video</h2>
     <p>Optional video content provided by GameMonetize may appear below.</p>
     <div id="gamemonetize-video" style="width:100%;min-height:240px;overflow:hidden;border-radius:12px"></div>
-    <script type="text/javascript">
-window.VIDEO_OPTIONS = {
-  gameid : "op80fpm9qz2r91kjhwsjb5vwttnxrgx2",
-  width  : "100%",
-  height : "480px",
-  color  : "#3f007e",
-  getAds : "true"
-};
-(function (a, b, c) {
-  var d = a.getElementsByTagName(b)[0];
-  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/video.js?v=" + Date.now(), d.parentNode.insertBefore(a, d))
-})(document, "script", "gamemonetize-video-api");
-</script>
+    
   </section>
 <section id="support-ohets" class="card" aria-labelledby="support-title">
   <h2 id="support-title">Support Ohets Games</h2>
@@ -217,7 +219,7 @@ window.VIDEO_OPTIONS = {
     <article class="card"><h3>Where can I read about privacy?</h3><p>Open the <a href="privacy.html">Privacy Policy</a> for information about privacy and website data.</p></article>
   </div>
 </section>
-<footer><span>© Ohets · Air Simulator</span><span><a href="privacy.html">Privacy Policy</a> · <a href="game.html">Open the game</a></span></footer>
+<footer><span>© Ohets · Air Simulator</span><span><a href="privacy.html">Privacy Policy</a> · <a href="game.html">Open the game</a> · <button type="button" class="cookie-settings-link" id="open-cookie-settings">Cookie settings</button></span></footer>
 
 <div id="ohets-game-notice" class="game-notice-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="ohets-game-notice-title" aria-describedby="ohets-game-notice-message" aria-hidden="true">
   <div class="game-notice">
@@ -229,6 +231,9 @@ window.VIDEO_OPTIONS = {
 
 <script>
 (function () {
+  const gameMonetizeConsentKey = "ohets_gamemonetize_cookie_consent";
+  let hasGameMonetizeConsent = false;
+  try { hasGameMonetizeConsent = localStorage.getItem(gameMonetizeConsentKey) === "accepted"; } catch (_) {}
   const feedUrl = "https://rss.gamemonetize.com/rssfeed.php?format=json&amount=200&type=html5";
   // Keep a few games available if the remote feed is temporarily unavailable.
   let games = [
@@ -271,7 +276,26 @@ window.VIDEO_OPTIONS = {
   const playerTitle = document.getElementById("game-player-title");
   const closeButton = document.getElementById("game-close");
   const fullscreenButton = document.getElementById("game-fullscreen");
+  function loadGameMonetizeVideo() {
+    if (!hasGameMonetizeConsent || document.getElementById("gamemonetize-video-api")) return;
+    window.VIDEO_OPTIONS = {
+      gameid: "op80fpm9qz2r91kjhwsjb5vwttnxrgx2",
+      width: "100%",
+      height: "480px",
+      color: "#3f007e",
+      getAds: "true"
+    };
+    const script = document.createElement("script");
+    script.id = "gamemonetize-video-api";
+    script.src = "https://api.gamemonetize.com/video.js?v=" + Date.now();
+    document.head.appendChild(script);
+  }
   function openSelectedGame(url, title) {
+    if (!hasGameMonetizeConsent) {
+      status.hidden = false;
+      status.textContent = "Please accept GameMonetize cookies to load and play games from this provider.";
+      return;
+    }
     closeGameNotice();
     player.hidden = false;
     playerTitle.textContent = title;
@@ -282,6 +306,13 @@ window.VIDEO_OPTIONS = {
   }
 
   function render() {
+    if (!hasGameMonetizeConsent) {
+      grid.replaceChildren();
+      status.hidden = false;
+      status.textContent = "GameMonetize games are paused until you accept the provider's cookies in the cookie settings.";
+      player.hidden = true;
+      return;
+    }
     const q = search.value.trim().toLowerCase();
     const c = category.value;
     const visible = games.filter(g =>
@@ -350,7 +381,9 @@ window.VIDEO_OPTIONS = {
   search.addEventListener("input", render);
   category.addEventListener("change", render);
 
-fetch(feedUrl)
+if (hasGameMonetizeConsent) {
+  loadGameMonetizeVideo();
+  fetch(feedUrl)
     .then(response => {
       if (!response.ok) throw new Error("Feed request failed (" + response.status + ")");
       return response.text();
@@ -382,6 +415,9 @@ fetch(feedUrl)
         status.textContent = "Games could not be loaded automatically. The feed may block browser access (CORS) or use a different format. No changes to the main simulator are needed; check the GameMonetize feed settings.";
       }
     });
+} else {
+  render();
+}
 })();
 </script>
 
@@ -505,7 +541,42 @@ fetch(feedUrl)
 </script>
 
 
-
+<div id="cookie-consent-backdrop" class="cookie-consent-backdrop" role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title" aria-describedby="cookie-consent-description" aria-hidden="true">
+  <div class="cookie-consent">
+    <h2 id="cookie-consent-title">Your Cookie Choices</h2>
+    <p id="cookie-consent-description">GameMonetize uses cookies and similar technologies when its games and video content are loaded. These may be used for advertising, analytics and to support the services. Choose “Accept” to load GameMonetize content, or “Reject” to keep it disabled. You can change your choice at any time in Cookie settings. Read our <a href="privacy.html">Privacy Policy</a> for more information.</p>
+    <div class="actions">
+      <button type="button" class="button primary" id="accept-gamemonetize-cookies">Accept</button>
+      <button type="button" class="button secondary" id="reject-gamemonetize-cookies">Reject</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  const consentKey = "ohets_gamemonetize_cookie_consent";
+  const backdrop = document.getElementById("cookie-consent-backdrop");
+  const acceptButton = document.getElementById("accept-gamemonetize-cookies");
+  const rejectButton = document.getElementById("reject-gamemonetize-cookies");
+  const settingsButton = document.getElementById("open-cookie-settings");
+  function showBanner() {
+    backdrop.classList.add("is-visible");
+    backdrop.setAttribute("aria-hidden", "false");
+  }
+  function saveChoice(choice) {
+    try { localStorage.setItem(consentKey, choice); } catch (_) {}
+    window.location.reload();
+  }
+  acceptButton.addEventListener("click", function () { saveChoice("accepted"); });
+  rejectButton.addEventListener("click", function () { saveChoice("rejected"); });
+  settingsButton.addEventListener("click", function () {
+    try { localStorage.removeItem(consentKey); } catch (_) {}
+    showBanner();
+  });
+  let choice = "";
+  try { choice = localStorage.getItem(consentKey) || ""; } catch (_) {}
+  if (choice !== "accepted" && choice !== "rejected") showBanner();
+})();
+</script>
 
 </body>
 </html>
